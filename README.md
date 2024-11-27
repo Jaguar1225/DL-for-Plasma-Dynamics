@@ -6,10 +6,17 @@ This repository contains an implementation of an autoencoder-based model for ana
 
 The model leverages neural networks to encode and decode plasma-related data, using a dynamic attention-based architecture. It employs different types of autoencoders (standard, residual, logarithmic, and variational) to model the behavior of process variables over time.
 
+## Data
+
+### Train Data
+
+### Test Data
+![Test Ar raw data](images/Test_Ar_raw_data.png)
+
+
 ### Key Features:
 - **Autoencoder Models**: Uses various autoencoder types such as standard autoencoder, residual autoencoder, and variational autoencoders.
 
-(images/model_architecture.png)
 - **Plasma Equipment Variable Dynamics**: Incorporates domain-specific processing and variable dynamics for plasma equipment.
 - **Customization**: Fully customizable parameters for training, with different activation functions, normalization techniques, and encoder models.
   
