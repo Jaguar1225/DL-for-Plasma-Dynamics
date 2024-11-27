@@ -8,6 +8,8 @@ The model leverages neural networks to encode and decode plasma-related data, us
 
 ### Key Features:
 - **Autoencoder Models**: Uses various autoencoder types such as standard autoencoder, residual autoencoder, and variational autoencoders.
+
+(images/model_architecture.png)
 - **Plasma Equipment Variable Dynamics**: Incorporates domain-specific processing and variable dynamics for plasma equipment.
 - **Customization**: Fully customizable parameters for training, with different activation functions, normalization techniques, and encoder models.
   
