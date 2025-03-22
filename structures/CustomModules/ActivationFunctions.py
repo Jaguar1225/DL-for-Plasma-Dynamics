@@ -5,45 +5,54 @@ from torch import Tensor
 
 class act(nn.Module):
     def __init__(self, **params):
-        super(ActivationFunction, self).__init__()
-        if lowercase(self.params['activation_function']) == 'ReLU':
+        super(act, self).__init__()
+        self.params = params  # 파라미터를 저장
+        
+        activation_map = {
+            'relu': ReLU,
+            'leakyrelu': LeakyReLU,
+            'elu': ELU,
+            'gelu': GELU,
+            'prelu': PReLU,
+            'softplus': Softplus,
+            'softplusbeta': SoftplusBeta,
+            'tanh': Tanh,
+            'mish': Mish,
+            'mishbeta': MishBeta,
+            'sigmoid': Sigmoid,
+            'swish': Swish,
+            'swishbeta': SwishBeta,
+            # GLU 계열은 별도 처리가 필요
+        }
+        
+        act_name = self.params.get('activation_function', '').lower()
+        
+        if act_name in activation_map:
+            self.activation_function = activation_map[act_name]()
+        elif act_name in ['glu', 'bilinearglu', 'reglu', 'geluglu', 'swiglu']:
+            # GLU 계열은 별도 처리 (두 개의 입력을 받기 때문)
+            glu_map = {
+                'glu': GLU,
+                'bilinearglu': BilinearGLU,
+                'reglu': ReGLU,
+                'geluglu': GELUGLU,
+                'swiglu': SwiGLU
+            }
+            self.activation_function = glu_map[act_name]()
+            self.is_glu = True
+        else:
+            # 기본값은 ReLU로 설정
             self.activation_function = ReLU()
-        elif lowercase(self.params['activation_function']) == 'LeakyReLU':
-            self.activation_function = LeakyReLU()
-        elif lowercase(self.params['activation_function']) == 'ELU':
-            self.activation_function = ELU()
-        elif lowercase(self.params['activation_function']) == 'GELU':
-            self.activation_function = GELU()
-        elif lowercase(self.params['activation_function']) == 'PReLU':
-            self.activation_function = PReLU()
-        elif lowercase(self.params['activation_function']) == 'Softplus':
-            self.activation_function = Softplus()   
-        elif lowercase(self.params['activation_function']) == 'SoftplusBeta':
-            self.activation_function = SoftplusBeta()
-        elif lowercase(self.params['activation_function']) == 'Tanh':
-            self.activation_function = Tanh()
-        elif lowercase(self.params['activation_function']) == 'Mish':
-            self.activation_function = Mish()
-        elif lowercase(self.params['activation_function']) == 'MishBeta':
-            self.activation_function = MishBeta()
-        elif lowercase(self.params['activation_function']) == 'Sigmoid':
-            self.activation_function = Sigmoid()
-        elif lowercase(self.params['activation_function']) == 'Swish':
-            self.activation_function = Swish()  
-        elif lowercase(self.params['activation_function']) == 'SwishBeta':
-            self.activation_function = SwishBeta()
-        elif lowercase(self.params['activation_function']) == 'GLU':
-            self.activation_function = GLU()
-        elif lowercase(self.params['activation_function']) == 'BilinearGLU':
-            self.activation_function = BilinearGLU()
-        elif lowercase(self.params['activation_function']) == 'ReGLU':
-            self.activation_function = ReGLU()
-        elif lowercase(self.params['activation_function']) == 'GELUGLU':
-            self.activation_function = GELUGLU()
-        elif lowercase(self.params['activation_function']) == 'SwiGLU':
-            self.activation_function = SwiGLU()
-
-    def forward(self, x: Tensor):
+            
+    def forward(self, x: Tensor, y: Tensor = None):
+        if hasattr(self, 'is_glu') and self.is_glu:
+            if y is None:
+                # GLU는 두 개의 텐서를 입력받아야 함
+                # 입력이 하나라면 반으로 나누어 사용
+                split_size = x.size(1) // 2
+                a, b = torch.split(x, split_size, dim=1)
+                return self.activation_function(a, b)
+            return self.activation_function(x, y)
         return self.activation_function(x)
     
 '''
