@@ -1,5 +1,6 @@
-from .Autoencoder import *
-from .CustomModules import *
-from .LossFunctions import *
+import autoencoder
+import customs
+import loss_func
+import optimizer
 
-__all__ = ["Autoencoder", "CustomModules", "LossFunctions"]
+__all__ = ["autoencoder", "customs", "loss_func", "optimizer"]

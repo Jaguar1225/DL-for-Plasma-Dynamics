@@ -1,3 +1,4 @@
-from .base import *
+from .ae_base import *
+from .variational import *
 
-__all__ = ["Autoencoder"]
+__all__ = ["Autoencoder", "VariationalAutoencoder"]

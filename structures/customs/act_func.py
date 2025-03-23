@@ -3,9 +3,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor
 
-class act(nn.Module):
+class ActivationFunction(nn.Module):
     def __init__(self, **params):
-        super(act, self).__init__()
+        super(ActivationFunction, self).__init__()
         self.params = params  # 파라미터를 저장
         
         activation_map = {
