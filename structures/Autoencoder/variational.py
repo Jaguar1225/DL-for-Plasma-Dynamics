@@ -19,5 +19,7 @@ class VariationalAutoencoder(Autoencoder):
         for layer in self.decoder_layers:
             z = layer(z)
         return z
-
+    
+    def update_params(self, x):
+        pass
 
