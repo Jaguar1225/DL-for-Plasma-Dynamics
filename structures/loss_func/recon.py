@@ -4,9 +4,8 @@ import torch.nn.functional as F
 import torch as Tensor
 
 class ReconstructionLoss(nn.Module):
-    def __init__(self, **params):
+    def __init__(self):
         super(ReconstructionLoss, self).__init__()
-        self.params = params
 
         loss_fns_map = {
             'l2': self.l2_loss,

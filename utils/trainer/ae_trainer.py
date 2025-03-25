@@ -1,5 +1,3 @@
-import torch
-import torch.nn as nn
 from structures import autoencoder
 from structures import Layers
 
@@ -54,8 +52,3 @@ class AE_Trainer:
             input_dim=input_dim, hidden_dim=hidden_dim,
             activation_function=self.params['activation_function']
         )
-
-
-
-
-

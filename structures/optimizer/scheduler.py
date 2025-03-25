@@ -30,7 +30,7 @@ class Scheduler:
         
         self.scheduler = scheduler_map[params['scheduler']](self.optimizer, **params['scheduler_params'])
 
-    def step(self):
+    def scheduler_step(self):
         self.scheduler.step()
 
     def state_dict(self):
