@@ -7,7 +7,7 @@ import argparse
 
 import torch
 
-from utils.report import report_to_mail
+from utils.report import mail
 
 
 from utils.trainer import ModelTrainer
