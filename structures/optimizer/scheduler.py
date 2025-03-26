@@ -1,4 +1,5 @@
 import torch.optim as optim
+import torch
 
 class Scheduler:
     def __init__(self, optimizer, **params):
@@ -28,21 +29,34 @@ class Scheduler:
         
         self.scheduler = scheduler_map[params['scheduler'].lower()](self.optimizer, **params['scheduler_params'])
 
-    def scheduler_step(self):
-        self.scheduler.step()
+    def scheduler_step(self, epoch:int=None, loss:torch.Tensor=None):
+        if isinstance(self.scheduler, optim.lr_scheduler.ReduceLROnPlateau):
+            if loss is None:
+                raise ValueError("ReduceLROnPlateau scheduler requires loss/metric value")
+            self.scheduler.step(loss)
+        else:
+            if epoch is None:
+                raise ValueError("Other schedulers require epoch value")
+            self.scheduler.step(epoch)
 
     def state_dict(self):
         return self.scheduler.state_dict()
 
     def load_state_dict(self, state_dict):
         self.scheduler.load_state_dict(state_dict)
-
+        
     def early_stopping(self, metric, patience, min_delta):
-        if metric < self.scheduler.get_last_lr()[0] - min_delta:
-            self.scheduler.last_epoch = 0
+        if not hasattr(self, 'best_metric'):
+            self.best_metric = float('inf')
+            self.counter = 0
+            
+        if metric < self.best_metric - min_delta:
+            self.best_metric = metric
+            self.counter = 0
         else:
-            self.scheduler.last_epoch += 1
-        if self.scheduler.last_epoch >= patience:
+            self.counter += 1
+            
+        if self.counter >= patience:
             return True
         return False
     

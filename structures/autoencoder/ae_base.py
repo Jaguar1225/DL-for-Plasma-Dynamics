@@ -30,10 +30,16 @@ class StackingAutoencoderBase(Opt):
         self.decoder_layers.append(layer)
 
     def delete_encoder_layer(self):
-        self.encoder_layers.pop()
+        if len(self.encoder_layers) > 0:
+            removed_layer = self.encoder_layers.pop(-1)
+            return removed_layer
+        return None
 
     def delete_decoder_layer(self):
-        self.decoder_layers.pop()
+        if len(self.decoder_layers) > 0:
+            removed_layer = self.decoder_layers.pop(-1)
+            return removed_layer
+        return None
 
     def update_layer(self):
         self.clear_training_layer()
@@ -43,15 +49,16 @@ class StackingAutoencoderBase(Opt):
 
 class Autoencoder(
     StackingAutoencoderBase,
-    RegularizationLoss,
-    ReconstructionLoss
     ):
 
     def __init__(self, **params):
         self.params = params
         self.params['model'] = self.__class__.__name__
-
         super(Autoencoder, self).__init__()
+
+        self.reconstruction_loss = ReconstructionLoss(**self.params.get('reconstruction_loss', {}))
+        self.regularization_loss = RegularizationLoss(**self.params.get('regularization_loss', {}))
+
 
         try:
             if self.params['encoder_layers'] != None:
@@ -83,8 +90,9 @@ class Autoencoder(
             z = layer(z)
         return z
     
-    def loss_fn(self, x : Tensor):
-        loss = self.reconstruction_loss(self.forward(x), x)
+    def loss_fn(self, *inputs):
+        intensity, condition = inputs
+        loss = self.reconstruction_loss(self.forward(intensity), intensity)
         loss += self.params.get('lambda_reg', 0) * self.regularization_loss(self.training_layers)
         return loss
 

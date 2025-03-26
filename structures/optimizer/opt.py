@@ -78,38 +78,49 @@ class Opt(Opt_base, Scheduler, SummaryWriter):
         Scheduler.__init__(self, self.optimizer, **self.params['scheduler_params'])
 
         #tensorboard
-        self.params.setdefault('log_dir', f'./logs/{self.params["model"]}/hidden_dim_{
-            ("_").join([str(layer.output_dim) for layer in self.training_layers])
-            }')
+        self.params.setdefault('log_dir', f'./logs/{self.params["model"]}/hidden_dim_{("_").join([str(layer.output_dim) for layer in self.encoder_layers])}')
         SummaryWriter.__init__(self, self.params['log_dir'])
 
         pbar_epoch = tqdm(total=num_epochs, desc="Training", leave=True)
-        train_data = self.params.get('train_data', Train_Data_Set(self.params['data_path']))
+        train_data = self.params.get('train_data', 
+                                     Train_Data_Set(
+                                         self.params['data_path'],
+                                         batch_size=self.params['batch_size'],
+                                         shuffle=self.params['shuffle']
+                                         )
+                                    )
+        train_data.to(self.params['device'])
 
         for epoch in range(num_epochs):
             pbar_batch = tqdm(total=len(train_data), desc="Training", leave=False)
             loss_sum = 0
+            loss_mape = 0
 
-            for batch_idx, (x, y) in enumerate(train_data):
-                loss = self.step(epoch, x, y)
+            for batch_idx, (intensity, condition) in enumerate(train_data):
+                loss = self.step(epoch, intensity, condition)
                 loss_sum += loss
                 pbar_batch.update(1)
                 pbar_batch.set_postfix({'loss': loss})
+                average_intensity = intensity.mean()
+                loss_mape += loss/average_intensity
 
-            self.add_scalar(f'loss', loss_sum/len(train_data), epoch)
+            loss_mape = loss_mape*100/len(train_data)
+            self.add_scalar(f'loss_mape', loss_mape, epoch)
+            self.scheduler_step(epoch, loss_mape)
 
             pbar_epoch.update(1)
-            pbar_epoch.set_postfix({'loss': loss_sum/len(train_data)})
+            pbar_epoch.set_postfix({'loss percent': loss_mape})
 
             if self.early_stopping(
-                loss_sum/len(train_data), 
-                self.params['patience'], self.params['min_delta']):
+                loss_mape,  
+                self.params.get('patience', 10), 
+                self.params.get('min_delta', 1e-4)):
                 break
 
         pbar_batch.close()
         pbar_epoch.close()
 
-        return loss
+        return loss_mape
     
     def step(self, epoch, *inputs):
         loss = self.loss_fn(*inputs)
@@ -117,9 +128,7 @@ class Opt(Opt_base, Scheduler, SummaryWriter):
         self.zero_grad()
         loss.backward()
         self.optimizer_step()
-        self.scheduler_step()
-
-        return loss
+        return loss.item()
 
     def loss_fn(self, *inputs):
         pass
