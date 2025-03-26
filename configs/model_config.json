@@ -22,6 +22,7 @@
     "device": "cuda",
     "reconstruction_weight": 1.0,
     "regularization_weight": 0.01,
+    "lambda_reg": 0.01,
     "num_layers": 3,
     "num_epochs": 100,
     "data_path": "../250313/Data/"

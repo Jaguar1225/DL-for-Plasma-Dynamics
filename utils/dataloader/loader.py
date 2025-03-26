@@ -36,14 +36,15 @@ class Data_Loader(data.DataLoader):
         pbar = tqdm(total=len(files), desc="Loading data files", leave=False)
         # tqdm으로 파일 로딩 진행 상황 표시
         for i, file in enumerate(files):
-            data = np.loadtxt(file, delimiter=',', dtype=np.float32, skiprows=1)
+            data = np.loadtxt(file, delimiter=',', dtype=object, skiprows=1)
+            data = data[:, 1:].astype(np.float32)
             
             if i == 0:
                 intensity = data[:, 25:]
-                condition = data[:, 1:25]
+                condition = data[:, :25]
             else:
                 intensity = np.concatenate((intensity, data[:, 25:]), axis=0)
-                condition = np.concatenate((condition, data[:, 1:25]), axis=0)
+                condition = np.concatenate((condition, data[:, :25]), axis=0)
             pbar.update(1)
             pbar.set_postfix({'progress': f'{i+1}/{len(files)}'})
         

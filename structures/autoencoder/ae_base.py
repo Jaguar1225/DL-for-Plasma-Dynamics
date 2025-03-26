@@ -50,6 +50,8 @@ class Autoencoder(
     def __init__(self, **params):
         self.params = params
         self.params['model'] = self.__class__.__name__
+        self.reconstruction_loss = ReconstructionLoss(**self.params.get('reconstruction_loss', {}))
+        self.regularization_loss = RegularizationLoss(**self.params.get('regularization_loss', {}))
 
         super(Autoencoder, self).__init__()
 
@@ -83,8 +85,9 @@ class Autoencoder(
             z = layer(z)
         return z
     
-    def loss_fn(self, x : Tensor):
-        loss = self.reconstruction_loss(self.forward(x), x)
+    def loss_fn(self, *inputs):
+        intensity, condition = inputs
+        loss = self.reconstruction_loss(self.forward(intensity), intensity)
         loss += self.params.get('lambda_reg', 0) * self.regularization_loss(self.training_layers)
         return loss
 

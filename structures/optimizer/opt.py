@@ -88,8 +88,8 @@ class Opt(Opt_base, Scheduler, SummaryWriter):
             pbar_batch = tqdm(total=len(train_data), desc="Training", leave=False)
             loss_sum = 0
 
-            for batch_idx, (x, y) in enumerate(train_data):
-                loss = self.step(epoch, x, y)
+            for batch_idx, (intensity, condition) in enumerate(train_data):
+                loss = self.step(epoch, intensity, condition)
                 loss_sum += loss
                 pbar_batch.update(1)
                 pbar_batch.set_postfix({'loss': loss})
