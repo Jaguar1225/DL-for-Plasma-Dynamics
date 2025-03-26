@@ -2,7 +2,7 @@ import torch.optim as optim
 from .opt_base import Opt_base
 from .scheduler import Scheduler
 from tqdm import tqdm
-
+import os
 from utils.writer import SummaryWriter
 from utils.dataloader import Train_Data_Set
 
@@ -84,7 +84,7 @@ class Opt(Opt_base, Scheduler, SummaryWriter):
         SummaryWriter.__init__(self, self.params['log_dir'])
 
         pbar_epoch = tqdm(total=num_epochs, desc="Training", leave=True)
-        train_data = self.params.get('train_data', Train_Data_Set())
+        train_data = self.params.get('train_data', Train_Data_Set(self.params['data_path']))
 
         for epoch in range(num_epochs):
             pbar_batch = tqdm(total=len(train_data), desc="Training", leave=False)
