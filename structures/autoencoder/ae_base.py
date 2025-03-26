@@ -30,10 +30,16 @@ class StackingAutoencoderBase(Opt):
         self.decoder_layers.append(layer)
 
     def delete_encoder_layer(self):
-        self.encoder_layers.pop()
+        if len(self.encoder_layers) > 0:
+            removed_layer = self.encoder_layers.pop(-1)
+            return removed_layer
+        return None
 
     def delete_decoder_layer(self):
-        self.decoder_layers.pop()
+        if len(self.decoder_layers) > 0:
+            removed_layer = self.decoder_layers.pop(-1)
+            return removed_layer
+        return None
 
     def update_layer(self):
         self.clear_training_layer()

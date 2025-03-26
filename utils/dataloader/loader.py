@@ -3,6 +3,7 @@ import numpy as np
 from glob import glob
 from tqdm import tqdm
 import torch
+from .preprocess import Normalize
 
 class Data_Set(data.Dataset):
     def __init__(self, intensity, condition):
@@ -25,8 +26,7 @@ class Data_Set(data.Dataset):
 class Data_Loader(data.DataLoader):
     def __init__(self, data_path, **kwargs):
         intensity, condition = self.load_data(data_path)
-        self.intensity = intensity
-        self.condition = condition
+        intensity = Normalize().partial(intensity)
         dataset = Data_Set(intensity, condition)
         super(Data_Loader, self).__init__(dataset=dataset, **kwargs)
 

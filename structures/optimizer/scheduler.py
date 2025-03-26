@@ -44,13 +44,19 @@ class Scheduler:
 
     def load_state_dict(self, state_dict):
         self.scheduler.load_state_dict(state_dict)
-
+        
     def early_stopping(self, metric, patience, min_delta):
-        if metric < self.scheduler.get_last_lr()[0] - min_delta:
-            self.scheduler.last_epoch = 0
+        if not hasattr(self, 'best_metric'):
+            self.best_metric = float('inf')
+            self.counter = 0
+            
+        if metric < self.best_metric - min_delta:
+            self.best_metric = metric
+            self.counter = 0
         else:
-            self.scheduler.last_epoch += 1
-        if self.scheduler.last_epoch >= patience:
+            self.counter += 1
+            
+        if self.counter >= patience:
             return True
         return False
     
