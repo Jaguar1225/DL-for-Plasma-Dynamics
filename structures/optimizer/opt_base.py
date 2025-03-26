@@ -12,7 +12,8 @@ class Opt_base(nn.Module):
         self.training_layers.pop()
 
     def clear_training_layer(self):
-        self.training_layers.clear()
+        """ModuleList를 새로운 빈 ModuleList로 초기화합니다."""
+        self.training_layers = nn.ModuleList()
     
     def set_training_layers(self, training_layers):
         self.training_layers = training_layers

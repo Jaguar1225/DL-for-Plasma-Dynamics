@@ -3,24 +3,15 @@ import traceback
 import datetime
 import sys
 import argparse
-
+import json
+import yaml
 
 import torch
 
 from utils.report import mail
-
-
-from utils.trainer import ModelTrainer
+from utils.trainer import *
 
 from structures import *
-if torch.cuda.is_available():
-    device = torch.device('cuda')
-else:
-    device = torch.device('cpu')
-    
-dtype = torch.float32
-date = time.strftime('%Y-%m-%d', time.localtime())
-
 
 import os
 import sys
@@ -34,7 +25,10 @@ def get_parent_pid():
 def terminate_parent_process():
     parent_pid = get_parent_pid()
     try:
-        os.kill(parent_pid, signal.SIGTERM)
+        os.kill(
+            parent_pid, 
+            signal.SIGTERM
+            )
         print(f"부모 프로세스 (PID: {parent_pid})를 종료합니다.")
     except ProcessLookupError:
         print("부모 프로세스를 찾을 수 없습니다.")
@@ -75,129 +69,106 @@ def parse_models(arg):
     except ValueError as e:
         raise argparse.ArgumentTypeError(str(e))
 
-def parse_hidden(arg):
-    try:
-        return int(2**eval(arg))
-    except ValueError as e:
-        raise argparse.ArgumentTypeError(str(e))
+def load_config(config_path):
+    """설정 파일을 로드합니다."""
+    if config_path.endswith('.json'):
+        with open(config_path, 'r') as f:
+            json_config = json.load(f)
+    else:
+        raise ValueError("지원하지 않는 설정 파일 형식입니다. .json 또는 .yaml/.yml 파일을 사용하세요.")
+    return json_config
+
+def get_model_params(params, args):
+    """모델 파라미터를 설정합니다."""    
+    # 명령줄 인자로 전달된 파라미터 업데이트
+    if args.model:
+        params['model'] = args.model
+    if args.input_dim:
+        params['input_dim'] = args.input_dim
+    if args.hidden_dims:
+        params['hidden_dims'] = args.hidden_dims
+    if args.layer_type:
+        params['layer_type'] = args.layer_type
+    if args.activation:
+        params['activation_function'] = args.activation
+    if args.optimizer:
+        params['optimizer'] = args.optimizer
+    if args.learning_rate:
+        params['optimizer_params'] = params.get('optimizer_params', {})
+        params['optimizer_params']['lr'] = args.learning_rate
+    if args.device:
+        params['device'] = torch.device(args.device)
+    if args.log_dir:
+        params['log_dir'] = args.log_dir
+    if args.num_layers:
+        params['num_layers'] = args.num_layers
+    if args.num_epochs:
+        params['num_epochs'] = args.num_epochs
+
+    return params
 
 if __name__ == '__main__':
+
     parser = argparse.ArgumentParser(description='Train models')
-    parser.add_argument('--h', '--hidden', type=parse_hidden, help='Hidden dimensions')
-    parser.add_argument('--m', '--model', type=parse_models, help='Model class')
-    parser.add_argument('--s', '--sequence', type=int, help='Sequence length')
+    # 모델 관련 인자
+    parser.add_argument('--model', '-m',  type=parse_models, help='Model class')
+    parser.add_argument('--config', '-c', type=str, help='설정 파일 경로 (.json 또는 .yaml)')
+    parser.add_argument('--data_type', '-dt', type=str, help='데이터 타입')
+
+    # 모델 아키텍처 관련 인자
+    parser.add_argument('--input_dim', '-i', type=int, help='입력 차원')
+    parser.add_argument('--hidden_dims', '-hd', type=parse_list, help='은닉층 차원 리스트 (쉼표로 구분)')
+    parser.add_argument('--layer_type', '-lt', type=str, choices=['unit_coder', 'log_unit_encoder', 'log_unit_decoder', 'unit_transformer'],
+                      help='레이어 타입')
+    parser.add_argument('--activation', '-a', type=str, help='활성화 함수')
+    
+    # 옵티마이저 관련 인자
+    parser.add_argument('--optimizer', '-o', type=str, choices=['adam', 'adamw', 'sgd', 'rmsprop', 'adagrad'],
+                      help='옵티마이저 타입')
+    parser.add_argument('--learning_rate', '-lr', type=float, help='학습률')
+    
+    # 기타 설정
+    parser.add_argument('--device', '-d', type=str, choices=['cuda', 'cpu'], help='사용할 디바이스')
+    parser.add_argument('--scheduler', '-s', type=str, choices=['reduceLROnPlateau', 'stepLR', 'cosineAnnealingLR'],
+                      help='스케줄러 타입')
+    
+    parser.add_argument('--scheduler_params', '-sp', type=str, help='스케줄러 파라미터')
+    parser.add_argument('--optimizer_params', '-op', type=str, help='옵티마이저 파라미터')
+    parser.add_argument('--reconstruction_weight', '-rw', type=float, help='재구성 손실 가중치')
+    parser.add_argument('--regularization_weight', '-regw', type=float, help='정규화 손실 가중치')
+
+    parser.add_argument('--batch_size', '-bs', type=int, help='배치 크기')
+
+    parser.add_argument('--num_layers', '-nl', type=int, help='레이어 수')
+    parser.add_argument('--num_epochs', '-ne', type=int, help='학습 반복 횟수')
+
+    parser.add_argument('--log_dir', '-ld', type=str, help='텐서보드 로그 디렉토리')
+    
     args = parser.parse_args()
     
     # 시작 시간 기록
     start_time = time.time()
-    try:
-        params ={
-            'model_class': Autoencoder,
-            'hidden_dimension': 32,
-            'sequence_length': 2,
-            'layer_dimension': 5,
-            'num_trial': 3,
-            'epoch': 2**12,
-            'use_writer': True,
-            'date': date,
-            'device': device
-        }
-        params.update(
-            {
-                'hidden_dimension': args.h or params['hidden_dimension'],
-                'model_class': args.m or params['model_class'],
-                'sequence_length': args.s or params['sequence_length']
-            }
-        )
-        
-        if "Autoencoder" in params['model_class'].__name__:
-            params['sequence_length'] = 0
-        # 4. 실제 학습 실행
-        start_time = time.time()
-        model_trainer = ModelTrainer(**params)
-        model_trainer.train()
-        end_time = time.time()
-        elapsed_time = end_time - start_time
-        print(f"Complete! {datetime.timedelta(seconds= elapsed_time)} elapsed")
-
-        # 포함할 키워드와 제외할 키워드 설정
-        include_keywords = ['python', '__main__.py']  # 반드시 포함해야 할 키워드들
-        exclude_keywords = ['cursor', 'idle', 'python3']  # 제외할 키워드들
-
-        # 5. 모든 작업이 완료된 후에만 프로세스 체크
-        specific_processes = get_specific_processes(include_keywords, exclude_keywords)
-
-        if specific_processes:
-            print(f"지정된 조건에 맞는 활성 프로세스 목록:")
-            for proc in specific_processes:
-                print(proc)
-            print(f"\n총 {len(specific_processes)}개의 관련 프로세스가 실행 중입니다.")
-            terminate_parent_process()
-            print("현재 프로세스를 종료합니다.")
-            sys.exit(0)
-
-        else:
-            print("지정된 조건에 맞는 실행 중인 프로세스가 없습니다.")
-            model_trainer.final_plot()
-            val_layer_dim_convergence, val_h_or_t_convergence = model_trainer.convergence_check()
-            print(f'val_layer_dim_convergence: {val_layer_dim_convergence}')
-            print(f'val_h_or_t_convergence: {val_h_or_t_convergence}')
-            if "RNN" in model_trainer.model_class.__name__ or "PlasDyn" in model_trainer.model_class.__name__:
-                layer_dim_convergence = [16 for _ in range(val_layer_dim_convergence)] + [model_trainer.hidden_dimension]
-                sequence_length = val_h_or_t_convergence
-                hidden_dimension = params['hidden_dimension']
-            else:
-                layer_dim_convergence = [3648 for _ in range(val_layer_dim_convergence)] + [val_h_or_t_convergence]
-                sequence_length = params['sequence_length']
-                hidden_dimension = val_h_or_t_convergence
-
-            model_params = {
-                'model_class': model_trainer.model_class,
-                'date': model_trainer.date,
-                'device': model_trainer.device,
-                'process_variables': 16,
-                'epoch': model_trainer.epoch,
-                'num_trial': 1,
-                'hidden_dimension': hidden_dimension,
-                'layer_dimension': layer_dim_convergence,
-                'sequence_length': sequence_length,
-                'use_writer': True,
-                'keyword': f'{model_trainer.model_class.__name__} {val_h_or_t_convergence} {val_layer_dim_convergence}',
-            }
-            start_time = time.time()
-
-            model = params['model_class'](**model_params)
-            model.to(params['device'])
-
-            from utils.Data_loader import DataLoader as DL
-            train_data = DL(T=sequence_length, random_seed=42)
-            train_data.nor()
-            train_data.to(params['device'])
-
-            train_loss, train_recon_loss, train_cos_loss, train_l1_loss, \
-                val_loss, val_recon_loss, val_cos_loss, val_l1_loss = \
-                    model.update(train_data,epoch=params['epoch'],use_writer=params['use_writer'])
-            model_trainer.save_path = model.params['save_path']
-            model_trainer._save_model(model, model_trainer.save_path, model_params['keyword'])
-
-            end_time = time.time()
-            elapsed_time = end_time - start_time
-
-            print(f'{model_trainer.model_class.__name__} {val_h_or_t_convergence} {val_layer_dim_convergence} completed')
-            print(f'loss: {train_loss}, val_loss: {val_loss}')
-            print(f'time: {datetime.timedelta(seconds=elapsed_time)}')
-            
-    except Exception as e:
-        current_time = time.strftime('%Y-%m-%d', time.localtime())
-        elapsed_time = time.time() - start_time
-        print(f"Error occurred in main process: {str(e)}")
-        report_to_mail(
-            f"Error occurred in main process",
-            'kth102938@g.skku.edu',
-            'ronaldo1225!',
-            'code.jaguar1225@gmail.com',
-            contents = f'''Error {e} occured at {current_time}.
-                    Program proceeded during {datetime.timedelta(seconds= elapsed_time)}.
-                    {traceback.format_exc()}'''
-        )
     
+    try:
+        # 모델 파라미터 설정
+        params = load_config('./configs/model_config.json')
+        params = get_model_params(params, args)
+        
+        # 모델 생성 및 훈련
+        if params['model'].lower() == 'autoencoder':
+            trainer = AE_Trainer(**params)
+        else:
+            raise ValueError(f"지원하지 않는 모델입니다: {args.model}")
+        trainer.train()
+        
+        # 종료 시간 기록
+        end_time = time.time()
+        execution_time = end_time - start_time
+        
+        print(f"훈련 완료! 실행 시간: {execution_time:.2f}초")
+        
+    except Exception as e:
+        print(f"오류 발생: {str(e)}")
+        print(traceback.format_exc())
+        terminate_parent_process()
+        sys.exit(1)

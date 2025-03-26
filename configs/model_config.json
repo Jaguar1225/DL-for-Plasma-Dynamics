@@ -1,0 +1,27 @@
+{
+    "model": "autoencoder",
+    "input_dim": 3648,
+    "layer_type": "unit_coder",
+    "activation_function": "relu",
+    "optimizer": "adamw",
+    "optimizer_params": {
+        "lr": 0.001,
+        "betas": [0.9, 0.999],
+        "eps": 1e-8,
+        "weight_decay": 0.0001
+    },
+    "scheduler": "reduceLROnPlateau",
+    "scheduler_params": {
+        "mode": "min",
+        "factor": 0.1,
+        "patience": 10,
+        "threshold": 1e-4,
+        "min_lr": 0.0001,
+        "eps": 1e-8
+    },
+    "device": "cuda",
+    "reconstruction_weight": 1.0,
+    "regularization_weight": 0.01,
+    "num_layers": 3,
+    "num_epochs": 100
+} 

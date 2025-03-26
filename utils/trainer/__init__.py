@@ -1,3 +1,3 @@
-import ae_trainer
+from .ae_trainer import AE_Trainer
 
-__all__ = ["ae_trainer"]
+__all__ = ["AE_Trainer"]

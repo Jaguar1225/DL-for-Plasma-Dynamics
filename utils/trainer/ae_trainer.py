@@ -1,5 +1,5 @@
 from structures import autoencoder
-from structures import Layers
+from structures import layers
 
 class AE_Trainer:
     def __init__(self, **params):
@@ -13,22 +13,28 @@ class AE_Trainer:
         self.model = self.model_map[self.params['model']](**params)
 
         self.layer_map = {
-            'unit_coder':   Layers.UnitCoder,
-            'log_unit_encoder': Layers.UnitLogEncoder,
-            'log_unit_decoder': Layers.UnitLogDecoder,
-            'unit_transformer': Layers.UnitTransformer,
+            'unit_coder':   layers.UnitCoder,
+            'log_unit_encoder': layers.UnitLogEncoder,
+            'log_unit_decoder': layers.UnitLogDecoder,
+            'unit_transformer': layers.UnitTransformer,
         }
 
-    def train(self, num_layers, num_epochs):
+    def train(self):
         temp_loss = None
         input_dim = self.params['input_dim']
         hidden_dim = self.params['input_dim']
-        for n in range(num_layers):
+        for n in range(self.params['num_layers']):
             while True:
-                self.model.add_encoder_layer(self.partial_layer(input_dim, hidden_dim))
-                self.model.add_decoder_layer(self.partial_layer(hidden_dim, input_dim))
 
-                loss = self.model.train(num_epochs)
+                self.model.add_encoder_layer(
+                    self.partial_layer(input_dim, hidden_dim)
+                )
+                self.model.add_decoder_layer(
+                    self.partial_layer(hidden_dim, input_dim)
+                )
+                self.model.update_layer()
+
+                loss = self.model.train(self.params['num_epochs'])
 
                 if temp_loss == None:
                     temp_loss = loss
@@ -49,6 +55,6 @@ class AE_Trainer:
             
     def partial_layer(self,input_dim, hidden_dim):
         return self.layer_map[self.params['layer_type']](
-            input_dim=input_dim, hidden_dim=hidden_dim,
+            input_dim=input_dim, output_dim=hidden_dim,
             activation_function=self.params['activation_function']
         )
