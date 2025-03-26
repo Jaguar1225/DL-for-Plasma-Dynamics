@@ -43,17 +43,16 @@ class StackingAutoencoderBase(Opt):
 
 class Autoencoder(
     StackingAutoencoderBase,
-    RegularizationLoss,
-    ReconstructionLoss
     ):
 
     def __init__(self, **params):
         self.params = params
         self.params['model'] = self.__class__.__name__
+        super(Autoencoder, self).__init__()
+
         self.reconstruction_loss = ReconstructionLoss(**self.params.get('reconstruction_loss', {}))
         self.regularization_loss = RegularizationLoss(**self.params.get('regularization_loss', {}))
 
-        super(Autoencoder, self).__init__()
 
         try:
             if self.params['encoder_layers'] != None:

@@ -11,6 +11,7 @@ class AE_Trainer:
         }
 
         self.model = self.model_map[self.params['model']](**params)
+        self.model.to(self.params['device'])
 
         self.layer_map = {
             'unit_coder':   layers.UnitCoder,
@@ -57,4 +58,4 @@ class AE_Trainer:
         return self.layer_map[self.params['layer_type']](
             input_dim=input_dim, output_dim=hidden_dim,
             activation_function=self.params['activation_function']
-        )
+        ).to(self.params['device'])

@@ -2,11 +2,12 @@ import torch.utils.data as data
 import numpy as np
 from glob import glob
 from tqdm import tqdm
+import torch
 
 class Data_Set(data.Dataset):
     def __init__(self, intensity, condition):
-        self.intensity = intensity
-        self.condition = condition
+        self.intensity = torch.from_numpy(intensity)
+        self.condition = torch.from_numpy(condition)
 
     def __call__(self):
         return self.intensity, self.condition
@@ -16,6 +17,10 @@ class Data_Set(data.Dataset):
     
     def __getitem__(self, index):
         return self.intensity[index], self.condition[index]
+    
+    def to(self, device: torch.device):
+        self.intensity = self.intensity.to(device)
+        self.condition = self.condition.to(device)
 
 class Data_Loader(data.DataLoader):
     def __init__(self, data_path, **kwargs):
@@ -27,6 +32,10 @@ class Data_Loader(data.DataLoader):
 
     def __call__(self):
         return self.dataset.intensity, self.dataset.condition
+    
+    def to(self, device: torch.device):
+        self.dataset.intensity = self.dataset.intensity.to(device)
+        self.dataset.condition = self.dataset.condition.to(device)
 
     def load_data(self, data_path):
         files = glob(data_path + '/*.csv')

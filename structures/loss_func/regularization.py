@@ -7,5 +7,5 @@ class RegularizationLoss(nn.Module):
         super(RegularizationLoss, self).__init__()  
         self.params.setdefault('p', 1)
         
-    def forward(self, layer: nn.Module):
-        return layer.weight.norm(p=self.params.get('p', 1))
+    def forward(self, layers: nn.ModuleList):
+        return sum([layer.weight.norm(p=self.params.get('p', 1)) for layer in layers])

@@ -83,6 +83,7 @@ class Opt(Opt_base, Scheduler, SummaryWriter):
 
         pbar_epoch = tqdm(total=num_epochs, desc="Training", leave=True)
         train_data = self.params.get('train_data', Train_Data_Set(self.params['data_path']))
+        train_data.to(self.params['device'])
 
         for epoch in range(num_epochs):
             pbar_batch = tqdm(total=len(train_data), desc="Training", leave=False)
@@ -115,7 +116,7 @@ class Opt(Opt_base, Scheduler, SummaryWriter):
         self.zero_grad()
         loss.backward()
         self.optimizer_step()
-        self.scheduler_step()
+        self.scheduler_step(epoch, loss)
 
         return loss
 

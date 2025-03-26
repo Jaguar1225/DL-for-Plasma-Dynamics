@@ -1,4 +1,5 @@
 import torch.optim as optim
+import torch
 
 class Scheduler:
     def __init__(self, optimizer, **params):
@@ -28,8 +29,15 @@ class Scheduler:
         
         self.scheduler = scheduler_map[params['scheduler'].lower()](self.optimizer, **params['scheduler_params'])
 
-    def scheduler_step(self):
-        self.scheduler.step()
+    def scheduler_step(self, epoch:int=None, loss:torch.Tensor=None):
+        if isinstance(self.scheduler, optim.lr_scheduler.ReduceLROnPlateau):
+            if loss is None:
+                raise ValueError("ReduceLROnPlateau scheduler requires loss/metric value")
+            self.scheduler.step(loss)
+        else:
+            if epoch is None:
+                raise ValueError("Other schedulers require epoch value")
+            self.scheduler.step(epoch)
 
     def state_dict(self):
         return self.scheduler.state_dict()
