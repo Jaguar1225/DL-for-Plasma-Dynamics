@@ -2,6 +2,7 @@ from structures import autoencoder
 from structures import layers
 from tqdm import tqdm
 import torch
+
 import os
 class AE_Trainer:
     def __init__(self, **params):
