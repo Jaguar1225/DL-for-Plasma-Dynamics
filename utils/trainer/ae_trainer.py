@@ -31,8 +31,9 @@ class AE_Trainer:
         pbar_layer = tqdm(total=self.params['num_layers'], desc="Layer", leave=False)
 
         for n in range(self.params['num_layers']):
-            temp_loss = None
+            temp_loss = []
             while True:
+                hidden_dim_list.append(hidden_dim)
                 pbar_layer.set_postfix({'hidden_dim': hidden_dim_list})
 
                 self.model.add_encoder_layer(
@@ -45,21 +46,23 @@ class AE_Trainer:
 
                 loss = self.model.train(self.params['num_epochs'])
 
-                if temp_loss is None:
-                    temp_loss = loss
+                if len(temp_loss) < 2:
+                    temp_loss.append(loss)
                     hidden_dim = hidden_dim // 2
                 else:
-                    if (loss-temp_loss)/temp_loss > 1e-2:
+                    if (loss-temp_loss[-1])/(temp_loss[-1]-temp_loss[-2]) > 1e-1:
                         self.model.delete_encoder_layer()
                         self.model.delete_decoder_layer()
                         self.model.add_encoder_layer(removed_encoder_layer.to(self.params['device']))
                         self.model.add_decoder_layer(removed_decoder_layer.to(self.params['device']))
                         input_dim = self.model.encoder_layers[-1].output_dim
                         hidden_dim = input_dim
+                        hidden_dim_list.pop(-1)
                         hidden_dim_list.append(hidden_dim)
                         break
                     else:
-                        temp_loss = loss
+                        temp_loss.append(loss)
+                        temp_loss.pop(0)
                         hidden_dim = hidden_dim // 2
 
                 removed_encoder_layer = self.model.delete_encoder_layer()
@@ -70,9 +73,9 @@ class AE_Trainer:
                 if removed_decoder_layer is not None:
                     removed_decoder_layer.to(torch.device('cpu'))
 
+                hidden_dim_list.pop(-1)
                 if hidden_dim < 1:
                     break
-                    
                 pbar_layer.update(1)
             if hidden_dim == 1:
                 break

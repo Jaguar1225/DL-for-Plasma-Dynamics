@@ -69,7 +69,6 @@ class Opt(Opt_base, Scheduler, SummaryWriter):
         self.optimizer.load_state_dict(state_dict)
         
     def train(self, num_epochs):
-
         self.optimizer = self.opt_map[self.params['optimizer'].lower()](
             self.training_layers.parameters(), 
             **self.params['optimizer_params']
@@ -78,7 +77,7 @@ class Opt(Opt_base, Scheduler, SummaryWriter):
         Scheduler.__init__(self, self.optimizer, **self.params['scheduler_params'])
 
         #tensorboard
-        self.params.setdefault('log_dir', f'./logs/{self.params["model"]}/hidden_dim_{("_").join([str(layer.output_dim) for layer in self.encoder_layers])}')
+        self.params['log_dir'] = f'./logs/{self.params["model"]}/hidden_dim_{("_").join([str(layer.output_dim) for layer in self.encoder_layers])}'
         SummaryWriter.__init__(self, self.params['log_dir'])
 
         pbar_epoch = tqdm(total=num_epochs, desc="Training", leave=True)
@@ -111,11 +110,12 @@ class Opt(Opt_base, Scheduler, SummaryWriter):
             pbar_epoch.update(1)
             pbar_epoch.set_postfix({'loss percent': loss_mape})
 
-            if self.early_stopping(
-                loss_mape,  
-                self.params.get('patience', 10), 
-                self.params.get('min_delta', 1e-4)):
-                break
+            # Early stopping temporarily disabled
+            # if self.early_stopping(
+            #     loss_mape,  
+            #     self.params.get('patience', 10), 
+            #     self.params.get('min_delta', 1e-4)):
+            #     break
 
         pbar_batch.close()
         pbar_epoch.close()
