@@ -59,7 +59,6 @@ class Autoencoder(
         self.reconstruction_loss = ReconstructionLoss(**self.params.get('reconstruction_loss', {}))
         self.regularization_loss = RegularizationLoss(**self.params.get('regularization_loss', {}))
 
-
         try:
             if self.params['encoder_layers'] != None:
                 for layer in self.params['encoder_layers']:
