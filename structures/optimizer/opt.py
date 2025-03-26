@@ -78,9 +78,7 @@ class Opt(Opt_base, Scheduler, SummaryWriter):
         Scheduler.__init__(self, self.optimizer, **self.params['scheduler_params'])
 
         #tensorboard
-        self.params.setdefault('log_dir', f'./logs/{self.params["model"]}/hidden_dim_{
-            ("_").join([str(layer.output_dim) for layer in self.training_layers])
-            }')
+        self.params.setdefault('log_dir', f'./logs/{self.params["model"]}/hidden_dim_{("_").join([str(layer.output_dim) for layer in self.training_layers])}')
         SummaryWriter.__init__(self, self.params['log_dir'])
 
         pbar_epoch = tqdm(total=num_epochs, desc="Training", leave=True)
