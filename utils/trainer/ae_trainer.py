@@ -72,7 +72,6 @@ class AE_Trainer:
 
                 if hidden_dim < 1:
                     break
-                    
                 pbar_layer.update(1)
             if hidden_dim == 1:
                 break
