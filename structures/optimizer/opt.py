@@ -6,10 +6,9 @@ from tqdm import tqdm
 from utils.writer import SummaryWriter
 from utils.dataloader import Train_Data_Set
 
-class Opt(Opt_base,Scheduler,SummaryWriter):
-    def __init__(self, **params):
+class Opt(Opt_base, Scheduler, SummaryWriter):
+    def __init__(self):
         super(Opt, self).__init__()
-        self.params = params
         
         #optimizer
         self.opt_map = {
@@ -23,13 +22,12 @@ class Opt(Opt_base,Scheduler,SummaryWriter):
         self.params.setdefault('optimizer', 'adamW')
         self.params.setdefault('optimizer_params',
                           {
-                              'params': self.training_layers.parameters(),
                               'lr': 0.001,
                               'betas': (0.9, 0.999),
                               'eps': 1e-8,
                               'weight_decay': 0.0001,
                           })
-        
+
         #scheduler
         self.params.setdefault('scheduler', 'reduceLROnPlateau')
         self.params.setdefault('scheduler_params',
@@ -41,19 +39,17 @@ class Opt(Opt_base,Scheduler,SummaryWriter):
                               'min_lr': 0.0001,
                               'eps': 1e-8,
                           })
-        self.optimizer = self.opt_map[self.params['optimizer'].lower()](**self.params['optimizer_params'])
-        Scheduler.__init__(self, self.optimizer, **self.params['scheduler_params'])
 
-        #tensorboard
-        SummaryWriter.__init__(self, self.params['log_dir'])
 
     '''
     layer update function
     '''
 
-    def update_layer(self):
-        self.params['optimizer_params']['params'] = self.training_layers.parameters()
-        self.optimizer = self.opt_map[self.params['optimizer'].lower()](**self.params['optimizer_params'])
+    def update_optimizer(self):
+        self.optimizer = self.opt_map[self.params['optimizer'].lower()](
+            self.training_layers.parameters(),
+            **self.params['optimizer_params']
+            )
         Scheduler.__init__(self, self.optimizer, **self.params['scheduler_params'])
 
     '''
@@ -73,6 +69,19 @@ class Opt(Opt_base,Scheduler,SummaryWriter):
         self.optimizer.load_state_dict(state_dict)
         
     def train(self, num_epochs):
+
+        self.optimizer = self.opt_map[self.params['optimizer'].lower()](
+            self.training_layers.parameters(), 
+            **self.params['optimizer_params']
+            )
+        
+        Scheduler.__init__(self, self.optimizer, **self.params['scheduler_params'])
+
+        #tensorboard
+        self.params.setdefault('log_dir', f'./logs/{self.params["model"]}/hidden_dim_{
+            ("_").join([str(layer.output_dim) for layer in self.training_layers])
+            }')
+        SummaryWriter.__init__(self, self.params['log_dir'])
 
         pbar_epoch = tqdm(total=num_epochs, desc="Training", leave=True)
         train_data = self.params.get('train_data', Train_Data_Set())

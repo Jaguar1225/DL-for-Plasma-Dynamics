@@ -1,24 +1,32 @@
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch as Tensor
-from optimizer import Opt
-from loss_func import RegularizationLoss, ReconstructionLoss
+from ..optimizer import Opt
+from ..loss_func import RegularizationLoss, ReconstructionLoss
 
 class StackingAutoencoderBase(Opt):
     def __init__(self):
-        #tensorboard
-        self.params.setdefault('log_dir', f'./logs/{self.params["model"].__name__}/hidden_dim_{
-            [layer.hidden_dim for layer in self.encoder_layers].join("_")
-            }')
+        #torch default
+        if torch.cuda.is_available():
+            if self.params['device'] == 'cuda':
+                self.params['device'] = torch.device('cuda')
+        else:
+            self.params['device'] = torch.device('cpu')
+        self.params.setdefault('dtype', torch.float32)
         
+        #layer init
         super(StackingAutoencoderBase, self).__init__()
         self.encoder_layers = nn.ModuleList()
         self.decoder_layers = nn.ModuleList()
+        self.to(self.params['device'])
 
     def add_encoder_layer(self, layer : nn.Module):
+        layer.to(self.params['device'])
         self.encoder_layers.append(layer)
 
     def add_decoder_layer(self, layer : nn.Module):
+        layer.to(self.params['device'])
         self.decoder_layers.append(layer)
 
     def delete_encoder_layer(self):
@@ -27,10 +35,11 @@ class StackingAutoencoderBase(Opt):
     def delete_decoder_layer(self):
         self.decoder_layers.pop()
 
-    def update_encoder_layer(self):
+    def update_layer(self):
         self.clear_training_layer()
         self.add_training_layer(self.encoder_layers[-1])
         self.add_training_layer(self.decoder_layers[-1])
+        self.update_optimizer()
 
 class Autoencoder(
     StackingAutoencoderBase,
@@ -40,17 +49,24 @@ class Autoencoder(
 
     def __init__(self, **params):
         self.params = params
-        StackingAutoencoderBase.__init__(self)
-        RegularizationLoss.__init__(self)
-        ReconstructionLoss.__init__(self)
+        self.params['model'] = self.__class__.__name__
 
-        if self.params['encoder_layers'] != None:
-            for layer in self.params['encoder_layers']:
-                self.add_encoder_layer(layer)
+        super(Autoencoder, self).__init__()
 
-        if self.params['decoder_layers'] != None:
-            for layer in self.params['decoder_layers']:
-                self.add_decoder_layer(layer)
+        try:
+            if self.params['encoder_layers'] != None:
+                for layer in self.params['encoder_layers']:
+                    self.add_encoder_layer(layer)
+
+            if self.params['decoder_layers'] != None:
+                for layer in self.params['decoder_layers']:
+                    self.add_decoder_layer(layer)
+
+        except KeyError as key_error:
+            pass
+
+        except Exception as e:
+            print(f"Error: {e}")
 
     def forward(self, x : Tensor):
         z= self.encode(x)

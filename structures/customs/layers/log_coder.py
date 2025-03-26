@@ -5,7 +5,7 @@ import torch as Tensor
 
 from ..act_func import ActivationFunction as act
 
-'''
+r'''
         Assumptions:
         The specific intensity of optical emission spectra is defined as
 
@@ -53,8 +53,6 @@ from ..act_func import ActivationFunction as act
         The saturation point of the number of nodes would be the optimal number of species.
         After that, we will repeat the same process for the next layer.
         The final layer would be the optimal number of species.
-    
-            
 '''
 
 class UnitLogEncoder(nn.Module):
@@ -66,7 +64,7 @@ class UnitLogEncoder(nn.Module):
         self.activation_function = params.get('activation_function', 'ReLU')
 
         self.Encoder = nn.Linear(self.input_dim, self.output_dim+1)
-        self.act = act(self.activation_function)
+        self.act = act(activation_function=self.activation_function)
 
     def forward(self, N: Tensor):
         logN = torch.log(N, dim=-1)
@@ -75,7 +73,7 @@ class UnitLogEncoder(nn.Module):
         N = torch.exp(self.act(logN))
         return N, T
 
-'''
+r'''
         Assumptions:
         There are quantities, that are summations of densities of specific species.
         The elements of the summation follow the parition rule for specific quantities.

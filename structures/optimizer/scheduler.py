@@ -6,18 +6,16 @@ class Scheduler:
 
         scheduler_map = {
             'step': optim.lr_scheduler.StepLR,
-            'reduceLROnPlateau': optim.lr_scheduler.ReduceLROnPlateau,
-            'cosineAnnealingLR': optim.lr_scheduler.CosineAnnealingLR,
-            'cosineAnnealingWarmRestarts': optim.lr_scheduler.CosineAnnealingWarmRestarts,
-            'multiStepLR': optim.lr_scheduler.MultiStepLR,
+            'reducelronplateau': optim.lr_scheduler.ReduceLROnPlateau,
+            'cosineannealinglr': optim.lr_scheduler.CosineAnnealingLR,
+            'cosineannealingwarmrestarts': optim.lr_scheduler.CosineAnnealingWarmRestarts,
+            'multisteplr': optim.lr_scheduler.MultiStepLR,
             'exponentialLR': optim.lr_scheduler.ExponentialLR,
             'constantLR': optim.lr_scheduler.ConstantLR,
-            'constantLR_with_warmup': optim.lr_scheduler.ConstantLR_with_warmup,
             'linearLR': optim.lr_scheduler.LinearLR,
-            'linearLR_with_warmup': optim.lr_scheduler.LinearLR_with_warmup,
         }
 
-        params.setdefault('scheduler', 'reduceLROnPlateau')
+        params.setdefault('scheduler', 'reducelronplateau')
         params.setdefault('scheduler_params',
                           {
                               'mode': 'min',
@@ -28,7 +26,7 @@ class Scheduler:
                               'eps': 1e-8,
                           })
         
-        self.scheduler = scheduler_map[params['scheduler']](self.optimizer, **params['scheduler_params'])
+        self.scheduler = scheduler_map[params['scheduler'].lower()](self.optimizer, **params['scheduler_params'])
 
     def scheduler_step(self):
         self.scheduler.step()
