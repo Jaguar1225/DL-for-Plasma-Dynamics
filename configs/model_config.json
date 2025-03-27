@@ -26,5 +26,5 @@
     "lambda_reg": 0.01,
     "num_layers": 10,
     "num_epochs": 1024,
-    "data_path": "../250313/Data/"
+    "data_path": "../../250313/Data/"
 } 

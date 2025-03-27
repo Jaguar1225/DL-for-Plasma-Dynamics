@@ -1,6 +1,6 @@
 import torch.nn as nn
 import torch as Tensor
-
+import torch
 from ..act_func import ActivationFunction as act
 
 class UnitCoder(nn.Module):
@@ -19,3 +19,14 @@ class UnitCoder(nn.Module):
 
     def forward(self, x: Tensor):
         return self.Layer(x)
+
+    def clone(self):
+        """모듈의 깊은 복사본을 생성합니다."""
+        new_layer = UnitCoder(**self.params)
+        # 가중치와 편향 복사
+        new_layer.Layer[0].weight.data.copy_(self.Layer[0].weight.data)
+        new_layer.Layer[0].bias.data.copy_(self.Layer[0].bias.data)
+        # weight와 bias 참조 업데이트
+        new_layer.weight = new_layer.Layer[0].weight
+        new_layer.bias = new_layer.Layer[0].bias
+        return new_layer

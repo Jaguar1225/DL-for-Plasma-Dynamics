@@ -65,6 +65,9 @@ class UnitLogEncoder(nn.Module):
 
         self.Encoder = nn.Linear(self.input_dim, self.output_dim+1)
         self.act = act(activation_function=self.activation_function)
+        
+        self.weight = self.Encoder[0].weight
+        self.bias = self.Encoder[0].bias
 
     def forward(self, N: Tensor):
         logN = torch.log(N, dim=-1)
@@ -72,6 +75,14 @@ class UnitLogEncoder(nn.Module):
         T = torch.exp(invT)
         N = torch.exp(self.act(logN))
         return N, T
+    
+    def clone(self):
+        new_encoder = UnitLogEncoder(**self.params)
+        new_encoder.Encoder.weight.data.copy_(self.Encoder.weight.data)
+        new_encoder.Encoder.bias.data.copy_(self.Encoder.bias.data)
+        new_encoder.weight = new_encoder.Encoder[0].weight
+        new_encoder.bias = new_encoder.Encoder[0].bias
+        return new_encoder
 
 r'''
         Assumptions:

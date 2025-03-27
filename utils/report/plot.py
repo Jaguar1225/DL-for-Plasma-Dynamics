@@ -1,5 +1,4 @@
 import matplotlib.pyplot as plt
-import seaborn as sns
 import numpy as np
 from typing import List, Tuple, Union, Optional
 import os
@@ -12,8 +11,7 @@ class PlotStyle:
     def set_style():
         """기본 스타일 설정"""
         # 기본 스타일 설정
-        plt.style.use('seaborn')
-        sns.set_theme(style="whitegrid")
+        plt.style.use('default')
         
         # 폰트 설정
         plt.rcParams['font.family'] = 'sans-serif'
@@ -38,7 +36,6 @@ class PlotStyle:
         # 여백 설정
         plt.rcParams['figure.autolayout'] = True
         plt.rcParams['figure.constrained_layout.use'] = True
-        
 
 class Plotter:
     """플로팅 유틸리티 클래스"""
@@ -48,20 +45,10 @@ class Plotter:
         Args:
             save_dir (str): 그래프 저장 디렉토리
         """
-        self.save_dir = './plots/' + save_dir
-        os.makedirs(self.save_dir, exist_ok=True)
-        PlotStyle.set_style()
-        
-        # 기본 색상 팔레트
-        self.colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
-                      '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
-        
-        # 기본 마커 스타일
-        self.markers = ['o', 's', '^', 'D', 'v', '<', '>', 'p', '*', 'h']
-        
-        # 기본 라인 스타일
-        self.linestyles = ['-', '--', ':', '-.']
-    
+        self.save_dir = save_dir
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
+            
     def plot_heatmap(self,
                     data: Union[List, np.ndarray],
                     title: str = '',
@@ -70,32 +57,25 @@ class Plotter:
                     save_name: Optional[str] = None,
                     dpi: int = 300) -> None:
         """
-        히트맵 생성
+        히트맵 플로팅
         
         Args:
-            data: 히트맵 데이터
-            title: 그래프 제목
-            xlabel: x축 레이블
-            ylabel: y축 레이블
-            save_name: 저장 파일명
-            dpi: 해상도
+            data (Union[List, np.ndarray]): 플로팅할 데이터
+            title (str): 그래프 제목
+            xlabel (str): x축 레이블
+            ylabel (str): y축 레이블
+            save_name (Optional[str]): 저장 파일명
+            dpi (int): 저장 해상도
         """
-        plt.figure(figsize=(8, 6))
-        
-        if data is list:
-            data = np.array(data).T
-        
-        sns.heatmap(data, annot=True, cmap='RdBu_r', vmin=0, vmax=1, center=0.5)
-        
-        plt.title(title, pad=15)
+        plt.figure(figsize=(10, 8))
+        plt.imshow(data, aspect='auto', cmap='viridis')
+        plt.colorbar()
+        plt.title(title)
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
         
-        plt.tight_layout()
-        
         if save_name:
-            save_path = os.path.join(self.save_dir, save_name)
-            plt.savefig(save_path, bbox_inches='tight', dpi=dpi)
+            plt.savefig(os.path.join(self.save_dir, save_name), dpi=dpi, bbox_inches='tight')
         plt.close()
 
     def plot_line(self, 

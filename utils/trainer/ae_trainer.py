@@ -28,6 +28,8 @@ class AE_Trainer:
         }
 
     def train(self):
+        sat_idx = 1
+        sat_hidden_dim = None
         input_dim = self.params['input_dim']
         hidden_dim = self.params['input_dim']
 
@@ -38,45 +40,52 @@ class AE_Trainer:
 
         for n in range(self.params['num_layers']):
             for m in range(int(np.log2(input_dim))):
+                temp_loss = None
+                while True:
+                    hidden_dim_list.append(hidden_dim)
+                    pbar_layer.set_postfix({'Hidden dim ': str(hidden_dim_list), 'Sat. hidden dim ': str(sat_hidden_dim)})
+
+                    self.model.add_encoder_layer(
+                        self.partial_layer(input_dim, hidden_dim)
+                    )
+                    self.model.add_decoder_layer(
+                        self.partial_layer(hidden_dim, input_dim)
+                    )
+                    self.model.update_layer()
+                    
+                    loss_log[n,loss_log.shape[-1]-sat_idx-m] = self.model.train(self.params['num_epochs'])
+
+                    if self.saturation_detection(loss_log, n, loss_log.shape[-1]-sat_idx-m):
+                        sat_encoder_layer = removed_encoder_layer.clone()
+                        sat_decoder_layer = removed_decoder_layer.clone()
+                        sat_hidden_dim = removed_hidden_dim
+                        sat_idx = m
+
+                    removed_encoder_layer = self.model.delete_encoder_layer()
+                    removed_decoder_layer = self.model.delete_decoder_layer()
+                    removed_hidden_dim = hidden_dim
+
+                    if removed_encoder_layer is not None:
+                        removed_encoder_layer.to('cpu')
+                    if removed_decoder_layer is not None:
+                        removed_decoder_layer.to('cpu')
+        
+                    hidden_dim = hidden_dim//2
+                    hidden_dim_list.pop(-1)
+                    if hidden_dim < 1:
+                        break
+
+                input_dim = sat_hidden_dim
+                hidden_dim = sat_hidden_dim
+                
 
                 hidden_dim_list.append(hidden_dim)
 
-                self.model.add_encoder_layer(
-                    self.partial_layer(input_dim, hidden_dim)
-                )
-                self.model.add_decoder_layer(
-                    self.partial_layer(hidden_dim, input_dim)
-                )
-                self.model.update_layer()
-                
-                loss_log[n][int(np.log2(self.params['input_dim'])-m)] = self.model.train(self.params['num_epochs'])
+                self.model.add_encoder_layer(sat_encoder_layer.to(self.params['device']))
+                self.model.add_decoder_layer(sat_decoder_layer.to(self.params['device']))
+                pbar_layer.update(1)
 
-                if self.saturation_detection(loss_log, n, int(np.log2(self.params['input_dim'])-m)):
-                    sat_encoder_layer = removed_encoder_layer.clone()
-                    sat_decoder_layer = removed_decoder_layer.clone()
-                    sat_hidden_dim = removed_hidden_dim
-                    
-                removed_encoder_layer = self.model.delete_encoder_layer()
-                removed_decoder_layer = self.model.delete_decoder_layer()
-                removed_hidden_dim = hidden_dim
-
-                if removed_encoder_layer is not None:
-                    removed_encoder_layer.to('cpu')
-                if removed_decoder_layer is not None:
-                    removed_decoder_layer.to('cpu')
-    
-                hidden_dim = hidden_dim//2
-                hidden_dim_list.pop(-1)
-
-            input_dim = sat_hidden_dim
-            hidden_dim = sat_hidden_dim
-
-            hidden_dim_list.append(hidden_dim)
-
-            self.model.add_encoder_layer(sat_encoder_layer.to(self.params['device']))
-            self.model.add_decoder_layer(sat_decoder_layer.to(self.params['device']))
-
-        Plotter.plot_heatmap(loss_log, 
+            Plotter.plot_heatmap(loss_log, 
                              title = 'Loss Log', 
                              xlabel = 'Hidden Dimension', 
                              ylabel = 'Number of Layers', 
@@ -89,14 +98,25 @@ class AE_Trainer:
             activation_function=self.params['activation_function']
         ).to(self.params['device'])
     
-    def saturation_detection(self, loss_log: np.ndarray, row: int, col: int, criterion: float = 1e-1):
+    def saturation_detection(self, loss_log: np.ndarray, row: int, col: int, criterion: float = 0.1):
+        """
+        Loss 증가 패턴을 감지하는 함수
+        
+        Args:
+            loss_log: Loss 기록 배열
+            row: 현재 레이어 인덱스
+            col: 현재 hidden dimension 인덱스
+            criterion: 감지 기준값 (기본값: 0.1 = 10% 증가)
+        """
         if loss_log.shape[-1] - col < 2:
             return False
         
-        sat_score = loss_log[row][col] - loss_log[row][col+1]
-        sat_score = sat_score / (loss_log[row][col+2] - loss_log[row][col+1])
+        # 현재 loss와 이전 loss의 상대적 증가율 계산
+        current_loss = loss_log[row][col]
+        prev_loss = loss_log[row][col+1]
         
-        if sat_score > criterion:
+        # loss가 10% 이상 증가하면 포화로 판단
+        if current_loss > prev_loss * (1 + criterion):
             return True
-        else:
-            return False
+            
+        return False

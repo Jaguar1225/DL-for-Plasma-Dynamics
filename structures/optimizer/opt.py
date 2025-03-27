@@ -80,7 +80,7 @@ class Opt(Opt_base, Scheduler, SummaryWriter):
         self.params['log_dir'] = f'./logs/{self.params["model"]}/hidden_dim_{("_").join([str(layer.output_dim) for layer in self.encoder_layers])}'
         SummaryWriter.__init__(self, self.params['log_dir'])
 
-        pbar_epoch = tqdm(total=num_epochs, desc="Training", leave=True)
+        pbar_epoch = tqdm(total=num_epochs, desc="Training", leave=False)
         train_data = self.params.get('train_data', 
                                      Train_Data_Set(
                                          self.params['data_path'],
@@ -90,8 +90,9 @@ class Opt(Opt_base, Scheduler, SummaryWriter):
                                     )
         train_data.to(self.params['device'])
 
+
         for epoch in range(num_epochs):
-            pbar_batch = tqdm(total=len(train_data), desc="Training", leave=False)
+            pbar_batch = tqdm(total=len(train_data), desc="Batch", leave=False)
             loss_sum = 0
             loss_mape = 0
 
@@ -108,7 +109,7 @@ class Opt(Opt_base, Scheduler, SummaryWriter):
             self.scheduler_step(epoch, loss_mape)
 
             pbar_epoch.update(1)
-            pbar_epoch.set_postfix({'loss percent': loss_mape})
+            pbar_epoch.set_postfix({'loss percent': loss_mape.item()})
 
             # Early stopping temporarily disabled
             # if self.early_stopping(
@@ -132,8 +133,3 @@ class Opt(Opt_base, Scheduler, SummaryWriter):
 
     def loss_fn(self, *inputs):
         pass
-
-
-    
-
-
