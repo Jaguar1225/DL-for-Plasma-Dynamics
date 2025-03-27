@@ -45,9 +45,8 @@ class Plotter:
         Args:
             save_dir (str): 그래프 저장 디렉토리
         """
-        self.save_dir = save_dir
-        if not os.path.exists(save_dir):
-            os.makedirs(save_dir)
+        self.save_dir = f'plots/{save_dir}'
+        os.makedirs(self.save_dir, exist_ok=True)
             
     def plot_heatmap(self,
                     data: Union[List, np.ndarray],
@@ -68,7 +67,7 @@ class Plotter:
             dpi (int): 저장 해상도
         """
         plt.figure(figsize=(10, 8))
-        plt.imshow(data, aspect='auto', cmap='viridis')
+        plt.imshow(data, aspect='auto', cmap='RdBu_r')
         plt.colorbar()
         plt.title(title)
         plt.xlabel(xlabel)
