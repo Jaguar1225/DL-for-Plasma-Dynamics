@@ -1,9 +1,12 @@
+import torch
+import numpy as np
+
 from structures import autoencoder
 from structures import layers
-from tqdm import tqdm
-import torch
+from utils.report.plot import Plotter
 
-import os
+from tqdm import tqdm
+
 class AE_Trainer:
     def __init__(self, **params):
         self.params = params
@@ -31,11 +34,12 @@ class AE_Trainer:
         hidden_dim_list = []
         pbar_layer = tqdm(total=self.params['num_layers'], desc="Layer", leave=False)
 
+        loss_log = np.zeros((self.params['num_layers'], int(np.log2(self.params['input_dim']))))
+
         for n in range(self.params['num_layers']):
-            temp_loss = []
-            while True:
+            for m in range(int(np.log2(input_dim))):
+
                 hidden_dim_list.append(hidden_dim)
-                pbar_layer.set_postfix({'hidden_dim': hidden_dim_list})
 
                 self.model.add_encoder_layer(
                     self.partial_layer(input_dim, hidden_dim)
@@ -44,49 +48,55 @@ class AE_Trainer:
                     self.partial_layer(hidden_dim, input_dim)
                 )
                 self.model.update_layer()
+                
+                loss_log[n][int(np.log2(self.params['input_dim'])-m)] = self.model.train(self.params['num_epochs'])
 
-                loss = self.model.train(self.params['num_epochs'])
-
-                if len(temp_loss) < 2:
-                    temp_loss.append(loss)
-                    hidden_dim = hidden_dim // 2
-                else:
-                    if (loss-temp_loss[-1])/(temp_loss[-1]-temp_loss[-2]) > 1e-1:
-                        self.model.delete_encoder_layer()
-                        self.model.delete_decoder_layer()
-                        self.model.add_encoder_layer(removed_encoder_layer.to(self.params['device']))
-                        self.model.add_decoder_layer(removed_decoder_layer.to(self.params['device']))
-                        input_dim = self.model.encoder_layers[-1].output_dim
-                        hidden_dim = input_dim
-                        hidden_dim_list.pop(-1)
-                        hidden_dim_list.append(hidden_dim)
-                        break
-                    else:
-                        temp_loss.append(loss)
-                        temp_loss.pop(0)
-                        hidden_dim = hidden_dim // 2
-
+                if self.saturation_detection(loss_log, n, int(np.log2(self.params['input_dim'])-m)):
+                    sat_encoder_layer = removed_encoder_layer.clone()
+                    sat_decoder_layer = removed_decoder_layer.clone()
+                    sat_hidden_dim = removed_hidden_dim
+                    
                 removed_encoder_layer = self.model.delete_encoder_layer()
                 removed_decoder_layer = self.model.delete_decoder_layer()
+                removed_hidden_dim = hidden_dim
 
                 if removed_encoder_layer is not None:
-                    removed_encoder_layer.to(torch.device('cpu'))
+                    removed_encoder_layer.to('cpu')
                 if removed_decoder_layer is not None:
-                    removed_decoder_layer.to(torch.device('cpu'))
-
+                    removed_decoder_layer.to('cpu')
+    
+                hidden_dim = hidden_dim//2
                 hidden_dim_list.pop(-1)
-                if hidden_dim < 1:
-                    break
-                pbar_layer.update(1)
-            if hidden_dim == 1:
-                break
-        pbar_layer.close()
-        os.makedirs(f'models/{self.params["model"]}_model', exist_ok=True)
-        torch.save(self.model, f'models/{self.params["model"]}_model/hidden_dim_{("_").join([str(layer) for layer in hidden_dim_list])}.pth')
-        return hidden_dim_list
+
+            input_dim = sat_hidden_dim
+            hidden_dim = sat_hidden_dim
+
+            hidden_dim_list.append(hidden_dim)
+
+            self.model.add_encoder_layer(sat_encoder_layer.to(self.params['device']))
+            self.model.add_decoder_layer(sat_decoder_layer.to(self.params['device']))
+
+        Plotter.plot_heatmap(loss_log, 
+                             title = 'Loss Log', 
+                             xlabel = 'Hidden Dimension', 
+                             ylabel = 'Number of Layers', 
+                             save_name = 'loss_log.png',
+                             dpi = 300)
             
     def partial_layer(self,input_dim, hidden_dim):
         return self.layer_map[self.params['layer_type']](
             input_dim=input_dim, output_dim=hidden_dim,
             activation_function=self.params['activation_function']
         ).to(self.params['device'])
+    
+    def saturation_detection(self, loss_log: np.ndarray, row: int, col: int, criterion: float = 1e-1):
+        if loss_log.shape[-1] - col < 2:
+            return False
+        
+        sat_score = loss_log[row][col] - loss_log[row][col+1]
+        sat_score = sat_score / (loss_log[row][col+2] - loss_log[row][col+1])
+        
+        if sat_score > criterion:
+            return True
+        else:
+            return False
