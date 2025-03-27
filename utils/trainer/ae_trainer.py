@@ -4,8 +4,9 @@ import numpy as np
 from structures import autoencoder
 from structures import layers
 from utils.report.plot import Plotter
-
+import os
 from tqdm import tqdm
+
 
 class AE_Trainer:
     def __init__(self, **params):
@@ -63,7 +64,7 @@ class AE_Trainer:
                             sat_hidden_dim = removed_hidden_dim
                             sat_idx = m
                             sat = True
-                            
+
                     removed_encoder_layer = self.model.delete_encoder_layer()
                     removed_decoder_layer = self.model.delete_decoder_layer()
                     removed_hidden_dim = hidden_dim
@@ -94,8 +95,8 @@ class AE_Trainer:
                              ylabel = 'Number of Layers', 
                              save_name = 'loss_log.png',
                              dpi = 300)
-            
-    def partial_layer(self,input_dim, hidden_dim):
+            os.makedirs(f'/models/{self.model.params["model"]}', exist_ok=True)
+            torch.save(self.model, f'/models/{self.model.params["model"]}/{self.model.params["model"]}_{"_".join(str(hidden_dim_list))}.pth')
         return self.layer_map[self.params['layer_type']](
             input_dim=input_dim, output_dim=hidden_dim,
             activation_function=self.params['activation_function']
