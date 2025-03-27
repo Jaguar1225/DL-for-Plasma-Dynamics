@@ -24,8 +24,9 @@ class UnitCoder(nn.Module):
         """모듈의 깊은 복사본을 생성합니다."""
         new_layer = UnitCoder(**self.params)
         # 가중치와 편향 복사
-        new_layer.Layer[0].weight.data.copy_(self.Layer[0].weight.data)
-        new_layer.Layer[0].bias.data.copy_(self.Layer[0].bias.data)
+        with torch.no_grad():
+            new_layer.Layer[0].weight.copy_(self.Layer[0].weight)
+            new_layer.Layer[0].bias.copy_(self.Layer[0].bias)
         # weight와 bias 참조 업데이트
         new_layer.weight = new_layer.Layer[0].weight
         new_layer.bias = new_layer.Layer[0].bias

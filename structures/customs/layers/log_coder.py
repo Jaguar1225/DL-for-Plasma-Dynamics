@@ -78,10 +78,9 @@ class UnitLogEncoder(nn.Module):
     
     def clone(self):
         new_encoder = UnitLogEncoder(**self.params)
-        new_encoder.Encoder.weight.data.copy_(self.Encoder.weight.data)
-        new_encoder.Encoder.bias.data.copy_(self.Encoder.bias.data)
-        new_encoder.weight = new_encoder.Encoder[0].weight
-        new_encoder.bias = new_encoder.Encoder[0].bias
+        with torch.no_grad():
+            new_encoder.Encoder.weight.copy_(self.Encoder.weight)
+            new_encoder.Encoder.bias.copy_(self.Encoder.bias)
         return new_encoder
 
 r'''
@@ -163,3 +162,10 @@ class UnitLogDecoder(nn.Module):
 
     def forward(self, N: Tensor, Ti: Tensor):
         return F.softmax(-self.act(self.Energies(Ti)),dim=-1) * N
+    
+    def clone(self):
+        new_decoder = UnitLogDecoder(**self.params)
+        with torch.no_grad():
+            new_decoder.Energies.weight.copy_(self.Energies.weight)
+            new_decoder.Energies.bias.copy_(self.Energies.bias)
+        return new_decoder
