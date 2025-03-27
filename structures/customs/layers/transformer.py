@@ -32,3 +32,16 @@ class UnitTransformer(nn.Module):
             attn = self.act(attn/torch.sqrt(torch.tensor(self.output_dim)))
 
         return attn@v
+    
+    def clone(self):
+        new_transformer = UnitTransformer(**self.params)
+        new_transformer.Q.weight.data.copy_(self.Q.weight.data)
+        new_transformer.Q.bias.data.copy_(self.Q.bias.data)
+
+        new_transformer.K.weight.data.copy_(self.K.weight.data)
+        new_transformer.K.bias.data.copy_(self.K.bias.data)
+        
+        new_transformer.V.weight.data.copy_(self.V.weight.data)
+        new_transformer.V.bias.data.copy_(self.V.bias.data)
+        
+        return new_transformer

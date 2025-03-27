@@ -85,7 +85,7 @@ class AE_Trainer:
                 self.model.add_decoder_layer(sat_decoder_layer.to(self.params['device']))
                 pbar_layer.update(1)
 
-        Plotter.plot_heatmap(loss_log, 
+            Plotter.plot_heatmap(loss_log, 
                              title = 'Loss Log', 
                              xlabel = 'Hidden Dimension', 
                              ylabel = 'Number of Layers', 
