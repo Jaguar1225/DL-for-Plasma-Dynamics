@@ -56,13 +56,15 @@ class AE_Trainer:
                     
                 loss_log[n,loss_log.shape[-1]-sat_idx-m] = self.model.train(self.params['num_epochs'])
 
-                if ~sat:
+                if not sat:
                     if self.saturation_detection(loss_log, n, loss_log.shape[-1]-sat_idx-m):
                         sat_encoder_layer = removed_encoder_layer.clone()
                         sat_decoder_layer = removed_decoder_layer.clone()
                         sat_hidden_dim = removed_hidden_dim
                         sat_idx = m
                         sat = True
+                else:
+                    pass
                             
                 removed_encoder_layer = self.model.delete_encoder_layer()
                 removed_decoder_layer = self.model.delete_decoder_layer()
@@ -77,13 +79,14 @@ class AE_Trainer:
                 hidden_dim_list.pop(-1)
                 if hidden_dim < 1:
                     break
-            
+            if hidden_dim < 1:
+                break
             os.makedirs(f'plots/{self.params["model"]}', exist_ok=True)
-            Plotter.plot_heatmap(loss_log, 
+            Plotter(f'{self.params["model"]}').plot_heatmap(loss_log, 
                              title = 'Loss Log', 
                              xlabel = 'Hidden Dimension', 
                              ylabel = 'Number of Layers', 
-                             save_name = f'{self.params["model"]}/loss_log.png',
+                             save_name = 'loss_log.png',
                              dpi = 300)
             
             input_dim = sat_hidden_dim
