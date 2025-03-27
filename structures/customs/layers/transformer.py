@@ -35,13 +35,13 @@ class UnitTransformer(nn.Module):
     
     def clone(self):
         new_transformer = UnitTransformer(**self.params)
-        new_transformer.Q.weight.data.copy_(self.Q.weight.data)
-        new_transformer.Q.bias.data.copy_(self.Q.bias.data)
+        with torch.no_grad():
+            new_transformer.Q.weight.copy_(self.Q.weight)
+            new_transformer.Q.bias.copy_(self.Q.bias)
 
-        new_transformer.K.weight.data.copy_(self.K.weight.data)
-        new_transformer.K.bias.data.copy_(self.K.bias.data)
-        
-        new_transformer.V.weight.data.copy_(self.V.weight.data)
-        new_transformer.V.bias.data.copy_(self.V.bias.data)
-        
+            new_transformer.K.weight.copy_(self.K.weight)
+            new_transformer.K.bias.copy_(self.K.bias)
+
+            new_transformer.V.weight.copy_(self.V.weight)
+            new_transformer.V.bias.copy_(self.V.bias)
         return new_transformer

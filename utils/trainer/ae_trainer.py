@@ -107,7 +107,7 @@ class AE_Trainer:
             activation_function=self.params['activation_function']
         ).to(self.params['device'])
     
-    def saturation_detection(self, loss_log: np.ndarray, row: int, col: int, criterion: float = 0.01):
+    def saturation_detection(self, loss_log: np.ndarray, row: int, col: int, criterion: float = 0.1):
         """
         Loss 증가 패턴을 감지하는 함수
         
