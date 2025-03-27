@@ -39,6 +39,7 @@ class AE_Trainer:
         loss_log = np.zeros((self.params['num_layers'], int(np.log2(self.params['input_dim']))))
 
         for n in range(self.params['num_layers']):
+            sat = False
             for m in range(int(np.log2(input_dim))):
                 temp_loss = None
                 while True:
@@ -55,12 +56,14 @@ class AE_Trainer:
                     
                     loss_log[n,loss_log.shape[-1]-sat_idx-m] = self.model.train(self.params['num_epochs'])
 
-                    if self.saturation_detection(loss_log, n, loss_log.shape[-1]-sat_idx-m):
-                        sat_encoder_layer = removed_encoder_layer.clone()
-                        sat_decoder_layer = removed_decoder_layer.clone()
-                        sat_hidden_dim = removed_hidden_dim
-                        sat_idx = m
-
+                    if ~sat:
+                        if self.saturation_detection(loss_log, n, loss_log.shape[-1]-sat_idx-m):
+                            sat_encoder_layer = removed_encoder_layer.clone()
+                            sat_decoder_layer = removed_decoder_layer.clone()
+                            sat_hidden_dim = removed_hidden_dim
+                            sat_idx = m
+                            sat = True
+                            
                     removed_encoder_layer = self.model.delete_encoder_layer()
                     removed_decoder_layer = self.model.delete_decoder_layer()
                     removed_hidden_dim = hidden_dim
