@@ -2,7 +2,7 @@ import torch.optim as optim
 from .opt_base import Opt_base
 from .scheduler import Scheduler
 from tqdm import tqdm
-import os
+
 from utils.writer import SummaryWriter
 from utils.dataloader import Train_Data_Set
 
