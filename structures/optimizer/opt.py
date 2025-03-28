@@ -90,7 +90,6 @@ class Opt(Opt_base, Scheduler, SummaryWriter):
                                     )
         train_data.to(self.params['device'])
 
-
         for epoch in range(num_epochs):
             pbar_batch = tqdm(total=len(train_data), desc="Batch", leave=False)
             loss_sum = 0
@@ -117,6 +116,8 @@ class Opt(Opt_base, Scheduler, SummaryWriter):
             #     self.params.get('patience', 10), 
             #     self.params.get('min_delta', 1e-4)):
             #     break
+        self.writer.close()
+        del self.writer
 
         pbar_batch.close()
         pbar_epoch.close()

@@ -99,6 +99,9 @@ class AE_Trainer:
             self.model.add_decoder_layer(sat_decoder_layer.to(self.params['device']))
 
             pbar_layer.update(1)
+            
+            if input_dim <= 1:
+                break
 
         os.makedirs(f'models/{self.params["model"]}', exist_ok=True)
         torch.save(self.model, f'models/{self.params["model"]}/{self.params["model"]}_{"_".join(map(str, hidden_dim_list))}.pth')
