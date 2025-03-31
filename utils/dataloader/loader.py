@@ -24,9 +24,16 @@ class Data_Set(data.Dataset):
         self.condition = self.condition.to(device)
 
 class Data_Loader(data.DataLoader):
-    def __init__(self, data_path, **kwargs):
+    def __init__(self, data_path, preprocess, **kwargs):
         intensity, condition = self.load_data(data_path)
-        intensity = Normalize().partial(intensity)
+        map_preprocess = {
+            'logaritmic': Normalize().logaritmic,
+            'partial': Normalize().partial,
+            'minmax': Normalize().minmax,
+            'maxabs': Normalize().maxabs,
+            'standardize': Normalize().standardize
+        }
+        intensity = map_preprocess[preprocess](intensity)
         dataset = Data_Set(intensity, condition)
         super(Data_Loader, self).__init__(dataset=dataset, **kwargs)
 

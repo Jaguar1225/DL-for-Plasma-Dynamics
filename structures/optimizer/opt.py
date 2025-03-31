@@ -2,7 +2,7 @@ import torch.optim as optim
 from .opt_base import Opt_base
 from .scheduler import Scheduler
 from tqdm import tqdm
-
+import os
 from utils.writer import SummaryWriter
 from utils.dataloader import Train_Data_Set
 
@@ -84,6 +84,7 @@ class Opt(Opt_base, Scheduler, SummaryWriter):
         train_data = self.params.get('train_data', 
                                      Train_Data_Set(
                                          self.params['data_path'],
+                                         self.params['preprocess'],
                                          batch_size=self.params['batch_size'],
                                          shuffle=self.params['shuffle']
                                          )
