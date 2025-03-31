@@ -109,14 +109,15 @@ class Plotter:
         """
         plt.figure(figsize=(8, 6))
 
-        if x == list:
+        if isinstance(x, list):
             x = np.array(x).T
-            if len(x.shape) == 1:
-                x = x[:,np.newaxis]
-        if y == list:
+        if len(x.shape) == 1:
+            x = x[:,np.newaxis]
+                
+        if isinstance(y, list):
             y = np.array(y).T
-            if len(y.shape) == 1:
-                y = y[:,np.newaxis]
+        if len(y.shape) == 1:
+            y = y[:,np.newaxis]
         
         if color is None:
             color = self.colors[0:x.shape[-1]]  # 단일 색상으로 수정
@@ -177,10 +178,15 @@ class Plotter:
             dpi: 해상도
         """
 
-        if x is list:
+        if isinstance(x, list):
             x = np.array(x).T
-        if y is list:
+        if len(x.shape) == 1:
+            x = x[:,np.newaxis]
+                
+        if isinstance(y, list):
             y = np.array(y).T
+        if len(y.shape) == 1:
+            y = y[:,np.newaxis]
         plt.figure(figsize=(8, 6))
         
         if color is None:
