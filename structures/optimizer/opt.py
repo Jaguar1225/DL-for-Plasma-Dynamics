@@ -105,8 +105,10 @@ class Opt(Opt_base, Scheduler, SummaryWriter):
                 loss_mape += loss/average_intensity
 
             loss_mape = loss_mape*100/len(train_data)
-            self.add_scalar(f'loss_mape', loss_mape, epoch)
+            self.add_scalar(f'loss mape', loss_mape, epoch)
             self.scheduler_step(epoch, loss_mape)
+
+            self.add_scalar(f'lr', self.optimizer.param_groups[0]['lr'], epoch)
 
             pbar_epoch.update(1)
             pbar_epoch.set_postfix({'loss percent': loss_mape.item()})

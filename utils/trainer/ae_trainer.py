@@ -41,8 +41,11 @@ class AE_Trainer:
         for n in range(self.params['num_layers']):
             sat = False
             sat_hidden_dim = None
+
             for m in range(int(np.log2(input_dim))):
+
                 temp_loss = None
+
                 hidden_dim_list.append(hidden_dim)
                 pbar_layer.set_postfix({'Hidden dim ': str(hidden_dim_list), 'Sat. hidden dim ': str(sat_hidden_dim)})
 
@@ -78,20 +81,18 @@ class AE_Trainer:
                 hidden_dim = hidden_dim//2
                 hidden_dim_list.pop(-1)
 
-            Plotter(f'{self.params["model"]}').plot_heatmap(loss_log, 
+            Plotter(f'{self.params["model"]}').plot_heatmap(loss_log[:n], 
                              title = 'Loss Log', 
                              xlabel = 'Hidden Dimension', 
                              ylabel = 'Number of Layers', 
                              save_name = 'loss_log.png',
                              dpi = 300)
             
-            if sat_hidden_dim is not None:
-                input_dim = sat_hidden_dim
-                hidden_dim = sat_hidden_dim
+            if sat_hidden_dim is None:
+                break
 
-            else:
-                input_dim = hidden_dim
-                hidden_dim = hidden_dim
+            input_dim = sat_hidden_dim
+            hidden_dim = sat_hidden_dim
 
             hidden_dim_list.append(hidden_dim)
 
@@ -99,9 +100,6 @@ class AE_Trainer:
             self.model.add_decoder_layer(sat_decoder_layer.to(self.params['device']))
 
             pbar_layer.update(1)
-            
-            if input_dim <= 1:
-                break
 
         os.makedirs(f'models/{self.params["model"]}', exist_ok=True)
         torch.save(self.model, f'models/{self.params["model"]}/{self.params["model"]}_{"_".join(map(str, hidden_dim_list))}.pth')
@@ -112,7 +110,7 @@ class AE_Trainer:
             activation_function=self.params['activation_function']
         ).to(self.params['device'])
     
-    def saturation_detection(self, loss_log: np.ndarray, prev_sat_idx: int, row: int, col: int, criterion: float = 0.01):
+    def saturation_detection(self, loss_log: np.ndarray, prev_sat_idx: int, row: int, col: int, criterion: float = 10):
         """
         Loss 증가 패턴을 감지하는 함수
         
@@ -126,13 +124,14 @@ class AE_Trainer:
 
         col_rev = loss_log.shape[-1] - col -1
 
-        if col - prev_sat_idx< 2:
-            return False
+        #if col - prev_sat_idx< 2:
+        #    return False
         
         # 현재 loss와 이전 loss의 상대적 증가율 계산
         current_loss = loss_log[row][col_rev]
-        prev_loss = loss_log[row][col_rev+1]
+        #prev_loss = loss_log[row][col_rev+1]
         # loss가 10% 이상 증가하면 포화로 판단
+        #if current_loss > (1+criterion)*prev_loss:
         if current_loss > criterion:
             return True
             
