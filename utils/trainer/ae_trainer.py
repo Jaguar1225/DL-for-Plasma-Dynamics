@@ -80,6 +80,8 @@ class AE_Trainer:
         
                 hidden_dim = hidden_dim//2
                 hidden_dim_list.pop(-1)
+                if hidden_dim < 1:
+                    break
 
             Plotter(f'{self.params["model"]}').plot_heatmap(loss_log[:n], 
                              title = 'Loss Log', 
