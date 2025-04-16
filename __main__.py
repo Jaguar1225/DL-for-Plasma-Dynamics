@@ -1,10 +1,8 @@
 import time
 import traceback
-import datetime
 import sys
 import argparse
 import json
-import yaml
 
 import torch
 
@@ -35,7 +33,7 @@ def terminate_parent_process():
     except PermissionError:
         print("부모 프로세스를 종료할 권한이 없습니다.")
 
-def get_specific_processes(include_keywords, exclude_keywords):
+def get_specific_processes(include_keywords: list[str], exclude_keywords: list[str])->list[str]:
     try:
         output = subprocess.check_output(['ps', '-u', str(os.getuid()), '-o', 'pid,command'], universal_newlines=True)
         lines = output.strip().split('\n')[1:]
@@ -51,25 +49,25 @@ def get_specific_processes(include_keywords, exclude_keywords):
         print(f"프로세스 확인 중 오류가 발생했습니다: {e}")
         return None
 
-def parse_list(arg):
+def parse_list(arg: str)->list[int]:
     try:
         return [eval(x) for x in arg.split(',')]
     except ValueError:
         raise argparse.ArgumentTypeError("리스트는 쉼표로 구분된 정수여야 합니다.")
 
-def parse_bool(arg):
+def parse_bool(arg: str)->bool:
     try:
         return eval(arg)
     except ValueError:
         raise argparse.ArgumentTypeError("주어진 인자는 bool이 아닙니다.")
 
-def parse_models(arg):
+def parse_models(arg: str)->str:
     try:
         return eval(arg)
     except ValueError as e:
         raise argparse.ArgumentTypeError(str(e))
 
-def load_config(config_path):
+def load_config(config_path: str)->dict:
     """설정 파일을 로드합니다."""
     if config_path.endswith('.json'):
         with open(config_path, 'r') as f:
@@ -78,7 +76,7 @@ def load_config(config_path):
         raise ValueError("지원하지 않는 설정 파일 형식입니다. .json 또는 .yaml/.yml 파일을 사용하세요.")
     return json_config
 
-def get_model_params(params, args):
+def get_model_params(params: dict, args: argparse.Namespace)->dict:
     """모델 파라미터를 설정합니다."""    
     # 명령줄 인자로 전달된 파라미터 업데이트
     if args.model:

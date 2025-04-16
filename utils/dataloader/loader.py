@@ -6,7 +6,6 @@ import torch
 from .preprocess import Normalize
 
 class Data_Set(data.Dataset):
-    def __init__(self, intensity, condition):
         self.intensity = torch.from_numpy(intensity)
         self.condition = torch.from_numpy(condition)
 
@@ -16,15 +15,12 @@ class Data_Set(data.Dataset):
     def __len__(self):
         return len(self.intensity)
     
-    def __getitem__(self, index):
         return self.intensity[index], self.condition[index]
     
-    def to(self, device: torch.device):
         self.intensity = self.intensity.to(device)
         self.condition = self.condition.to(device)
 
 class Data_Loader(data.DataLoader):
-    def __init__(self, data_path, **kwargs):
         intensity, condition = self.load_data(data_path)
         intensity = Normalize().partial(intensity)
         dataset = Data_Set(intensity, condition)
@@ -33,11 +29,11 @@ class Data_Loader(data.DataLoader):
     def __call__(self):
         return self.dataset.intensity, self.dataset.condition
     
-    def to(self, device: torch.device):
+    def to(self, device: torch.device)->None:
         self.dataset.intensity = self.dataset.intensity.to(device)
         self.dataset.condition = self.dataset.condition.to(device)
 
-    def load_data(self, data_path):
+    def load_data(self, data_path: str)->tuple[torch.Tensor, torch.Tensor]:
         files = glob(data_path + '/*.csv')
         intensity = None
         condition = None
