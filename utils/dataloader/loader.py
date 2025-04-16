@@ -6,6 +6,7 @@ import torch
 from .preprocess import Normalize
 
 class Data_Set(data.Dataset):
+    def __init__(self, intensity: np.ndarray, condition: np.ndarray):
         self.intensity = torch.from_numpy(intensity)
         self.condition = torch.from_numpy(condition)
 
@@ -15,12 +16,15 @@ class Data_Set(data.Dataset):
     def __len__(self):
         return len(self.intensity)
     
+    def __getitem__(self, index: int)->tuple[torch.Tensor, torch.Tensor]:
         return self.intensity[index], self.condition[index]
     
+    def to(self, device: torch.device)->None:
         self.intensity = self.intensity.to(device)
         self.condition = self.condition.to(device)
 
 class Data_Loader(data.DataLoader):
+    def __init__(self, data_path: str, preprocess: str, **kwargs):
         intensity, condition = self.load_data(data_path)
         intensity = Normalize().partial(intensity)
         dataset = Data_Set(intensity, condition)

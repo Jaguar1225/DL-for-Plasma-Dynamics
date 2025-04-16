@@ -21,27 +21,27 @@ class StackingAutoencoderBase(Opt):
         self.decoder_layers = nn.ModuleList()
         self.to(self.params['device'])
 
-    def add_encoder_layer(self, layer : nn.Module):
+    def add_encoder_layer(self, layer : nn.Module)->None:
         layer.to(self.params['device'])
         self.encoder_layers.append(layer)
 
-    def add_decoder_layer(self, layer : nn.Module):
+    def add_decoder_layer(self, layer : nn.Module)->None:
         layer.to(self.params['device'])
         self.decoder_layers.append(layer)
 
-    def delete_encoder_layer(self):
+    def delete_encoder_layer(self)->nn.Module:
         if len(self.encoder_layers) > 0:
             removed_layer = self.encoder_layers.pop(-1)
             return removed_layer
         return None
 
-    def delete_decoder_layer(self):
+    def delete_decoder_layer(self)->nn.Module:
         if len(self.decoder_layers) > 0:
             removed_layer = self.decoder_layers.pop(-1)
             return removed_layer
         return None
 
-    def update_layer(self):
+    def update_layer(self)->None:
         self.clear_training_layer()
         self.add_training_layer(self.encoder_layers[-1])
         self.add_training_layer(self.decoder_layers[-1])
@@ -74,22 +74,22 @@ class Autoencoder(
         except Exception as e:
             print(f"Error: {e}")
 
-    def forward(self, x : Tensor):
+    def forward(self, x : Tensor)->Tensor:
         z= self.encode(x)
         x_hat = self.decode(z)
         return x_hat
     
-    def encode(self, x : Tensor):
+    def encode(self, x : Tensor)->Tensor:
         for layer in self.encoder_layers:
             x = layer(x)
         return x
     
-    def decode(self, z : Tensor):
+    def decode(self, z : Tensor)->Tensor:
         for layer in self.decoder_layers[::-1]:
             z = layer(z)
         return z
     
-    def loss_fn(self, *inputs):
+    def loss_fn(self, *inputs)->Tensor:
         intensity, condition = inputs
         loss = self.reconstruction_loss(self.forward(intensity), intensity)
         loss += self.params.get('lambda_reg', 0) * self.regularization_loss(self.training_layers)
