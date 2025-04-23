@@ -4,6 +4,7 @@ import torch.nn.functional as F
 import torch as Tensor
 from ..optimizer import Opt
 from ..loss_func import RegularizationLoss, ReconstructionLoss
+from typing import Union
 
 class StackingAutoencoderBase(Opt):
     def __init__(self):
@@ -89,7 +90,7 @@ class Autoencoder(
             z = layer(z)
         return z
     
-    def loss_fn(self, *inputs)->Tensor:
+    def loss_fn(self, *inputs : Union[torch.Tensor, torch.Tensor])->torch.Tensor:
         intensity, condition = inputs
         loss = self.reconstruction_loss(self.forward(intensity), intensity)
         loss += self.params.get('lambda_reg', 0) * self.regularization_loss(self.training_layers)
