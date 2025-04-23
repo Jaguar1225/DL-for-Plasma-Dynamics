@@ -49,6 +49,8 @@ class Data_Loader(data.DataLoader):
             files = glob(path.join(data_path, '*.csv'))
         else: #linux or ubuntu
             files = glob(path.join(data_path, '*.csv'))
+    def load_data(self, data_path: str)->tuple[torch.Tensor, torch.Tensor]:
+        files = glob(data_path + '/*.csv')
         intensity = None
         condition = None
         
