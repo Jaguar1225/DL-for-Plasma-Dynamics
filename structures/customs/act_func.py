@@ -44,7 +44,7 @@ class ActivationFunction(nn.Module):
             # 기본값은 ReLU로 설정
             self.activation_function = ReLU()
             
-    def forward(self, x: Tensor, y: Tensor = None):
+    def forward(self, x: Tensor, y: Tensor = None)->Tensor:
         if hasattr(self, 'is_glu') and self.is_glu:
             if y is None:
                 # GLU는 두 개의 텐서를 입력받아야 함
@@ -83,35 +83,35 @@ class ReLU(nn.Module):
     def __init__(self):
         super(ReLU, self).__init__()
 
-    def forward(self, x: Tensor):
+    def forward(self, x: Tensor)->Tensor:
         return F.relu(x)
     
 class LeakyReLU(nn.Module):
     def __init__(self):
         super(LeakyReLU, self).__init__()
 
-    def forward(self, x: Tensor):
+    def forward(self, x: Tensor)->Tensor:
         return F.leaky_relu(x)
     
 class ELU(nn.Module):
     def __init__(self):
         super(ELU, self).__init__()
 
-    def forward(self, x: Tensor):
+    def forward(self, x: Tensor)->Tensor:
         return F.elu(x)
         
 class GELU(nn.Module):
     def __init__(self):
         super(GELU, self).__init__()
 
-    def forward(self, x: Tensor):
+    def forward(self, x: Tensor)->Tensor:
         return F.gelu(x)
 
 class PReLU(nn.Module):
     def __init__(self):
         super(PReLU, self).__init__()
 
-    def forward(self, x: Tensor):
+    def forward(self, x: Tensor)->Tensor:
         return F.prelu(x)
 
 
@@ -129,7 +129,7 @@ class Softplus(nn.Module):
     def __init__(self):
         super(Softplus, self).__init__()
 
-    def forward(self, x: Tensor):
+    def forward(self, x: Tensor)->Tensor:
         return F.softplus(x)
     
 class SoftplusBeta(nn.Module):
@@ -137,7 +137,7 @@ class SoftplusBeta(nn.Module):
         super(SoftplusBeta, self).__init__()
         self.beta = nn.Parameter(torch.randn(1))
 
-    def forward(self, x: Tensor):
+    def forward(self, x: Tensor)->Tensor:
         return F.softplus(self.beta * x)
     
 '''
@@ -150,7 +150,7 @@ class Tanh(nn.Module):
     def __init__(self):
         super(Tanh, self).__init__()
 
-    def forward(self, x: Tensor):
+    def forward(self, x: Tensor)->Tensor:
         return F.tanh(x)
 
 '''
@@ -168,7 +168,7 @@ class Mish(nn.Module):
     def __init__(self):
         super(Mish, self).__init__()
 
-    def forward(self, x: Tensor):
+    def forward(self, x: Tensor)->Tensor:
         return x * torch.tanh(F.softplus(x))
     
 class MishBeta(nn.Module):
@@ -176,7 +176,7 @@ class MishBeta(nn.Module):
         super(MishBeta, self).__init__()
         self.beta = nn.Parameter(torch.randn(1))
 
-    def forward(self, x: Tensor):
+    def forward(self, x: Tensor)->Tensor:
         return x * torch.tanh(self.beta * F.softplus(x))
     
 '''
@@ -191,7 +191,7 @@ class Sigmoid(nn.Module):
     def __init__(self):
         super(Sigmoid, self).__init__()
 
-    def forward(self, x: Tensor):
+    def forward(self, x: Tensor)->Tensor:
         return F.sigmoid(x)
     
 '''
@@ -210,7 +210,7 @@ class Swish(nn.Module):
     def __init__(self):
         super(Swish, self).__init__()
 
-    def forward(self, x: Tensor):
+    def forward(self, x: Tensor)->Tensor:
         return x * torch.sigmoid(self.beta * x)
     
 class SwishBeta(nn.Module):
@@ -218,7 +218,7 @@ class SwishBeta(nn.Module):
         super(SwishBeta, self).__init__()
         self.beta = nn.Parameter(torch.randn(1))
 
-    def forward(self, x: Tensor):
+    def forward(self, x: Tensor)->Tensor:
         return 2 * x * torch.sigmoid(self.beta * x)
 
 '''
@@ -252,32 +252,32 @@ class GLU(nn.Module):
         self.b = nn.Parameter(torch.randn(2))
         self.c = nn.Parameter(torch.randn(2))
 
-    def forward(self, a: Tensor, b: Tensor):
+    def forward(self, a: Tensor, b: Tensor)->Tensor:
         return (a @ self.W + self.b) * torch.sigmoid(a @ self.V + self.c)
     
 class BilinearGLU(GLU):
     def __init__(self):
         super(BilinearGLU, self).__init__()
-    def forward(self, a: Tensor, b: Tensor):
+    def forward(self, a: Tensor, b: Tensor)->Tensor:
         return (a @ self.W + self.b) * (a @ self.V + self.c)
     
 class ReGLU(GLU):
     def __init__(self):
         super(ReGLU, self).__init__()
-    def forward(self, a: Tensor, b: Tensor):
+    def forward(self, a: Tensor, b: Tensor)->Tensor:
         return (a @ self.W + self.b) * F.relu(a @ self.V + self.c)
 
 class GELUGLU(GLU):
     def __init__(self):
         super(GELUGLU, self).__init__()
-    def forward(self, a: Tensor, b: Tensor):
+    def forward(self, a: Tensor, b: Tensor)->Tensor:
         return (a @ self.W + self.b) * F.gelu(a @ self.V + self.c)
 
 class SwiGLU(GLU):
     def __init__(self):
         super(SwiGLU, self).__init__()
         self.Swish = Swish()
-    def forward(self, a: Tensor, b: Tensor):
+    def forward(self, a: Tensor, b: Tensor)->Tensor:
         return (a @ self.W + self.b) * self.Swish(a @ self.V + self.c)
 
 

@@ -19,6 +19,7 @@
         "min_lr": 1e-5,
         "eps": 1e-8
     },
+    "preprocess": "standardize",
     "batch_size": 1024,
     "device": "cuda",
     "reconstruction_weight": 1.0,
